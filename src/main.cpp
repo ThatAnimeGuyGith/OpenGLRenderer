@@ -4,10 +4,16 @@
 
 #include <cstdio>
 
+void processInput(GLFWwindow *window)
+{
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
 int main() {
     if (!glfwInit()) {
         std::fprintf(stderr, "Failed to initialize GLFW\n");
-        return 1;
+        return -1;
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -18,7 +24,7 @@ int main() {
     if (window == nullptr) {
         std::fprintf(stderr, "Failed to create an OpenGL window\n");
         glfwTerminate();
-        return 1;
+        return -2;
     }
 
     glfwMakeContextCurrent(window);
@@ -26,7 +32,7 @@ int main() {
         std::fprintf(stderr, "Failed to initialize GLAD\n");
         glfwDestroyWindow(window);
         glfwTerminate();
-        return 1;
+        return -3;
     }
 
     std::printf("OpenGL version: %s\n", glGetString(GL_VERSION));
@@ -34,6 +40,9 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.08f, 0.12f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        processInput(window);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
