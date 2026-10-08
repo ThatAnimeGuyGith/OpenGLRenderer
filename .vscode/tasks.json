@@ -10,7 +10,7 @@
                 "-ExecutionPolicy",
                 "Bypass",
                 "-Command",
-                "New-Item -ItemType Directory -Force -ErrorAction Stop build | Out-Null; gcc -std=c11 -Wall -Wextra -Iinclude -c src/glad.c -o build/glad.o; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; g++ -std=c++17 -Wall -Wextra -DGLFW_DLL -Iinclude src/main.cpp build/glad.o -Llib -lglfw3dll -lopengl32 -o build/OpenGLRenderer.exe; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; Copy-Item -Path glfw3.dll -Destination build/glfw3.dll -Force -ErrorAction Stop"
+                "New-Item -ItemType Directory -Force -ErrorAction Stop build | Out-Null; gcc -std=c11 -Wall -Wextra -Iinclude -c src/glad.c -o build/glad.o; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; g++ -std=c++17 -Wall -Wextra -DGLFW_DLL -Iinclude -Iinclude/CustomHeaders src/main.cpp src/CustomHeaders/settings.cpp src/CustomHeaders/Window.cpp src/CustomHeaders/Shader.cpp build/glad.o -Llib -lglfw3dll -lopengl32 -o build/OpenGLRenderer.exe; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; Copy-Item -Path glfw3.dll -Destination build/glfw3.dll -Force -ErrorAction Stop"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -26,9 +26,9 @@
         {
             "label": "Run",
             "type": "shell",
-            "command": ".\\OpenGLRenderer.exe",
+            "command": ".\\build\\OpenGLRenderer.exe",
             "options": {
-                "cwd": "${workspaceFolder}\\build"
+                "cwd": "${workspaceFolder}"
             },
             "dependsOn": "Build",
             "dependsOrder": "sequence",
