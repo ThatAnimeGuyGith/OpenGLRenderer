@@ -40,7 +40,12 @@ FetchContent_Declare(nlohmann_json
     GIT_SHALLOW    TRUE
     FIND_PACKAGE_ARGS 3.11
 )
-FetchContent_MakeAvailable(glfw nlohmann_json)
+FetchContent_Declare(tinyobjloader
+    GIT_REPOSITORY https://github.com/tinyobjloader/tinyobjloader.git
+    GIT_TAG        v2.0.0rc13
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(glfw nlohmann_json tinyobjloader)
 
 # glad is generated code, so it is committed in third_party/glad.
 add_library(glad STATIC third_party/glad/src/glad.c)
@@ -57,13 +62,19 @@ add_executable(OpenGLRenderer
     src/Error.cpp
     src/Log.cpp
     src/Paths.cpp
+    src/ObjMesh.cpp
     src/Settings.cpp
     src/Shader.cpp
     src/Window.cpp
 )
 
 target_include_directories(OpenGLRenderer PRIVATE src)
-target_link_libraries(OpenGLRenderer PRIVATE glad glfw nlohmann_json::nlohmann_json)
+target_link_libraries(OpenGLRenderer PRIVATE
+    glad
+    glfw
+    nlohmann_json::nlohmann_json
+    tinyobjloader
+)
 
 target_compile_definitions(OpenGLRenderer PRIVATE
     OPENGLRENDERER_VERSION="${PROJECT_VERSION}"
@@ -81,22 +92,16 @@ if(MINGW)
 endif()
 
 # ---------------------------------------------------------------------------
-# Assets: make them appear next to the executable after every build.
-# Linux uses a symlink, so editing a shader needs no rebuild. Windows copies,
-# because symlinks there need special privileges.
+# Assets: copy them next to the executable on every build. This keeps shader
+# and configuration edits in sync even when no C++ source has changed.
 # ---------------------------------------------------------------------------
-if(UNIX)
-    set(ASSET_COMMAND create_symlink)
-else()
-    set(ASSET_COMMAND copy_directory)
-endif()
-
-add_custom_command(TARGET OpenGLRenderer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E ${ASSET_COMMAND}
+add_custom_target(copy_assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_SOURCE_DIR}/assets"
             "$<TARGET_FILE_DIR:OpenGLRenderer>/assets"
-    COMMENT "Placing assets next to the executable"
+    COMMENT "Synchronizing assets next to the executable"
 )
+add_dependencies(OpenGLRenderer copy_assets)
 
 # ---------------------------------------------------------------------------
 # Install + release packaging

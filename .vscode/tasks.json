@@ -1,0 +1,34 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: configure Debug",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--preset", "debug"],
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: build Debug",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--build", "--preset", "debug"],
+            "dependsOn": "CMake: configure Debug",
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "OpenGL Renderer: run Debug",
+            "type": "process",
+            "command": "${workspaceFolder}/build/debug/OpenGLRenderer.exe",
+            "dependsOn": "CMake: build Debug",
+            "dependsOrder": "sequence",
+            "group": "test",
+            "problemMatcher": []
+        }
+    ]
+}

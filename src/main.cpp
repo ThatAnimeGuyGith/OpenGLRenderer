@@ -3,10 +3,13 @@
 
 #include "Error.hpp"
 #include "Log.hpp"
+#include "ObjMesh.hpp"
 #include "Paths.hpp"
 #include "Settings.hpp"
 #include "Shader.hpp"
 #include "Window.hpp"
+
+#include <cmath>
 
 int main()
 {
@@ -34,41 +37,59 @@ int main()
             assetPath("shaders/vertexShader.vert"),
             assetPath("shaders/fragmentShader.frag"));
 
-        const float vertices[] = {
-            -0.5f, -0.5f, 0.0f,
-             0.5f, -0.5f, 0.0f,
-             0.0f,  0.5f, 0.0f
+        ObjMesh cube(assetPath("meshes/cube/cube.obj"));
+        glEnable(GL_DEPTH_TEST);
+
+        constexpr float view[] = {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, -3.0f, 1.0f
         };
-
-        GLuint VAO = 0;
-        GLuint VBO = 0;
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
 
         while (!glfwWindowShouldClose(window)) {
             processInput(window);
 
             glClearColor(0.08f, 0.12f, 0.17f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            int framebufferWidth = 0;
+            int framebufferHeight = 0;
+            glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
+            if (framebufferHeight == 0) {
+                glfwPollEvents();
+                continue;
+            }
+            const float aspect = static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
+            constexpr float focalLength = 2.41421356f;
+            constexpr float nearPlane = 0.1f;
+            constexpr float farPlane = 20.0f;
+            const float projection[] = {
+                focalLength / aspect, 0.0f, 0.0f, 0.0f,
+                0.0f, focalLength, 0.0f, 0.0f,
+                0.0f, 0.0f, (farPlane + nearPlane) / (nearPlane - farPlane), -1.0f,
+                0.0f, 0.0f, (2.0f * farPlane * nearPlane) / (nearPlane - farPlane), 0.0f
+            };
+            const float rotation = static_cast<float>(glfwGetTime()) * 0.35f;
+            const float cosine = std::cos(rotation);
+            const float sine = std::sin(rotation);
+            const float model[] = {
+                cosine, 0.0f, -sine, 0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                sine, 0.0f, cosine, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f
+            };
 
             glUseProgram(shaderProgram);
-            glBindVertexArray(VAO);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            setUniformMatrix4(shaderProgram, "model", model);
+            setUniformMatrix4(shaderProgram, "view", view);
+            setUniformMatrix4(shaderProgram, "projection", projection);
+            cube.draw();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
 
-        glDeleteVertexArrays(1, &VAO);
-        glDeleteBuffers(1, &VBO);
         glDeleteProgram(shaderProgram);
         glfwDestroyWindow(window);
         return 0;

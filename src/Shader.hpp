@@ -11,3 +11,5 @@ GLuint compileShader(GLenum type, const std::string& source, const std::string& 
 GLuint createShaderProgram(
     const std::filesystem::path& vertexPath,
     const std::filesystem::path& fragmentPath);
+
+void setUniformMatrix4(GLuint program, const char* name, const float* value);

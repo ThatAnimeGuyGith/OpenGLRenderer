@@ -100,3 +100,10 @@ GLuint createShaderProgram(
     Log::info("Linked shader program");
     return program;
 }
+
+void setUniformMatrix4(GLuint program, const char* name, const float* value)
+{
+    const GLint location = glGetUniformLocation(program, name);
+    if (location >= 0)
+        glUniformMatrix4fv(location, 1, GL_FALSE, value);
+}
