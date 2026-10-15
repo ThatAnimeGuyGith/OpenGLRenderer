@@ -143,7 +143,7 @@ The version number comes from `project(... VERSION ...)` in [`CMakeLists.txt`](C
 
 ## GitHub automation
 
-The [`Build`](.github/workflows/build.yml) workflow configures and builds the Debug preset on Ubuntu, macOS, and Windows for pushes, pull requests, and manual runs. Each platform build is available as a seven-day workflow artifact, including the executable and its shipped assets.
+The [`Build`](.github/workflows/build.yml) workflow configures and builds both Debug and Release presets on Ubuntu, macOS, and Windows for pushes, pull requests, and manual runs. It uploads only the Release executable and shipped assets for each platform as seven-day workflow artifacts.
 
 ## GitHub wiki
 

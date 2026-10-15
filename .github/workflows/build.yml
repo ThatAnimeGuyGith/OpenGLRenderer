@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    name: ${{ matrix.name }}
+    name: ${{ matrix.name }} (${{ matrix.build_type }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -22,10 +22,22 @@ jobs:
         include:
           - name: Ubuntu
             os: ubuntu-latest
+            build_type: debug
+          - name: Ubuntu
+            os: ubuntu-latest
+            build_type: release
           - name: macOS
             os: macos-latest
+            build_type: debug
+          - name: macOS
+            os: macos-latest
+            build_type: release
           - name: Windows
             os: windows-latest
+            build_type: debug
+          - name: Windows
+            os: windows-latest
+            build_type: release
 
     steps:
       - name: Check out the repository
@@ -51,32 +63,33 @@ jobs:
             mingw-w64-ucrt-x86_64-ninja
             git
 
-      - name: Configure Debug build on Unix
+      - name: Configure build on Unix
         if: runner.os != 'Windows'
         shell: bash
-        run: cmake --preset debug
+        run: cmake --preset ${{ matrix.build_type }}
 
-      - name: Configure Debug build on Windows
+      - name: Configure build on Windows
         if: runner.os == 'Windows'
         shell: msys2 {0}
-        run: cmake --preset debug
+        run: cmake --preset ${{ matrix.build_type }}
 
-      - name: Build Debug target on Unix
+      - name: Build target on Unix
         if: runner.os != 'Windows'
         shell: bash
-        run: cmake --build --preset debug
+        run: cmake --build --preset ${{ matrix.build_type }}
 
-      - name: Build Debug target on Windows
+      - name: Build target on Windows
         if: runner.os == 'Windows'
         shell: msys2 {0}
-        run: cmake --build --preset debug
+        run: cmake --build --preset ${{ matrix.build_type }}
 
-      - name: Upload build output
+      - name: Upload Release build output
+        if: matrix.build_type == 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: OpenGLRenderer-${{ matrix.name }}
+          name: OpenGLRenderer-${{ matrix.name }}-Release
           path: |
-            build/debug/OpenGLRenderer*
-            build/debug/assets
+            build/release/OpenGLRenderer*
+            build/release/assets
           if-no-files-found: error
           retention-days: 7

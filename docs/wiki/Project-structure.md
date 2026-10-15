@@ -9,4 +9,4 @@
 | `docs/wiki/` | Source Markdown published to the GitHub wiki |
 | `.github/workflows/` | Continuous-integration and wiki-publishing workflows |
 
-The GitHub Actions build workflow configures and compiles the Debug preset on Ubuntu, macOS, and Windows. It uploads each build's executable and assets as a short-lived workflow artifact.
+The GitHub Actions build workflow configures and compiles both Debug and Release presets on Ubuntu, macOS, and Windows. It uploads only the Release executable and assets as a short-lived workflow artifact for each platform.
