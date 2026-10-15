@@ -5,8 +5,21 @@
 
 #include <glad/glad.h>
 
+namespace {
+// GLFW describes why a call failed through this callback, for example "the
+// driver does not support OpenGL 3.3". Without it the only symptom is a null
+// window. Failures are also reported through exceptions, so this only logs.
+void glfwErrorCallback(int code, const char* description)
+{
+    Log::warn("GLFW error {:#x}: {}", code, description);
+}
+}
+
 GlfwSession::GlfwSession()
 {
+    // Allowed before glfwInit, and needed to see why glfwInit itself fails.
+    glfwSetErrorCallback(glfwErrorCallback);
+
     if (!glfwInit()) {
         throw RendererError(ErrorCategory::Window, "Failed to initialize GLFW");
     }
@@ -14,6 +27,10 @@ GlfwSession::GlfwSession()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    // macOS only provides a 3.2+ core context when forward compatibility is on.
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+#endif
 }
 
 GlfwSession::~GlfwSession()

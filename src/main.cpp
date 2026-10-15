@@ -112,7 +112,12 @@ int main()
         glfwSetWindowRefreshCallback(window, nullptr);
         glfwSetWindowUserPointer(window, nullptr);
         glDeleteProgram(shaderProgram);
-        glfwDestroyWindow(window);
+
+        // The window is deliberately not destroyed here. Destroying it also
+        // destroys its OpenGL context, and `cube` still has to delete its
+        // buffers when it goes out of scope after this return. `glfw` is
+        // declared first, so it is destroyed last, and glfwTerminate()
+        // closes the window once every GL object is gone.
         return 0;
     } catch (const RendererError& e) {
         Log::error(e.what());

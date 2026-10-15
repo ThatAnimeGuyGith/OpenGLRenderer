@@ -13,7 +13,7 @@ Currently supports loading OBJ meshes, configuring lighting, and changing basic 
 **Status:** Early development (`v0.2.1`).
 
 > [!WARNING]
-> The code changes frequently, and APIs and features may not stable yet.
+> The code changes frequently, and APIs and features may not be stable yet.
 
 ---
 
@@ -35,7 +35,7 @@ Currently supports loading OBJ meshes, configuring lighting, and changing basic 
 
 ## Building
 
-You need a C++20 compiler, CMake 3.24 or newer, Ninja, and Git.
+You need a C++20 compiler with `<format>` support, CMake 3.24 or newer, Ninja, and Git. On GCC that means version 13 or newer. Ubuntu 22.04 and Debian 12 ship older compilers by default, so use Ubuntu 24.04 or newer, or install a newer GCC.
 
 CMake manages GLFW, nlohmann/json, and tinyobjloader. On Linux, it uses system-installed GLFW and nlohmann/json when available; otherwise, it downloads and builds them.
 
@@ -45,6 +45,8 @@ CMake manages GLFW, nlohmann/json, and tinyobjloader. On Linux, it uses system-i
 **Actively tested platforms:**
 - [Windows (MSYS2 / MinGW-w64)](#windows-msys2-mingw-w64)
 - [Linux](#linux)
+
+macOS builds in CI and has startup code for it (executable path lookup and a forward-compatible OpenGL context), but nobody has run the renderer on a Mac yet. Treat it as untested.
 
 You can follow the platform-specific instructions *below* to set up and build the project:
 
@@ -137,7 +139,7 @@ cmake --preset release
 cmake --build --preset release --target package_release
 ```
 
-This creates a ready-to-run program folder and a ZIP archive under the generated `release/` directory. The package directory uses the project version and build date.
+This creates a ready-to-run program folder and a ZIP archive under the generated `release/` directory. The package directory uses the project version and build date. The package contains the executable, `assets/`, `LICENSE`, `README.md`, and `THIRD_PARTY_LICENSES.txt`.
 
 The version number comes from `project(... VERSION ...)` in [`CMakeLists.txt`](CMakeLists.txt). Change it there to update the project version used for packaging.
 
@@ -220,6 +222,8 @@ You agree to license the contribution under the same terms as the project and gr
 | [glad](https://github.com/Dav1dde/glad) 0.1.36 | OpenGL function loader | MIT / public domain |
 | [nlohmann/json](https://github.com/nlohmann/json) 3.12.0 | JSON parsing | MIT |
 | [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) 2.0.0rc13 | Wavefront OBJ loading | MIT |
+
+The full license texts are in [`THIRD_PARTY_LICENSES.txt`](THIRD_PARTY_LICENSES.txt), which is also included in release packages. Update it when you change a pinned version.
 
 The cube demo mesh was created by Morgan McGuire and released into the public domain.
 Its source and attribution are documented in [`assets/meshes/cube/cube.obj`](assets/meshes/cube/cube.obj).
