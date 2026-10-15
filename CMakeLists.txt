@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 # The version lives here and nowhere else. The release script reads it.
-project(OpenGLRenderer VERSION 0.2.2 LANGUAGES C CXX)
+project(OpenGLRenderer VERSION 0.2.3 LANGUAGES C CXX)
 
 # <format> arrived in GCC 13. Fail here, with a clear
 # message, instead of deep inside the compiler with "format: No such file".
@@ -74,9 +74,21 @@ add_executable(OpenGLRenderer
     src/Settings.cpp
     src/Shader.cpp
     src/Window.cpp
+    src/headers/Error.hpp
+    src/headers/Log.hpp
+    src/headers/ObjMesh.hpp
+    src/headers/Paths.hpp
+    src/headers/Settings.hpp
+    src/headers/Shader.hpp
+    src/headers/Window.hpp
 )
 
-target_include_directories(OpenGLRenderer PRIVATE src)
+if(WIN32)
+    set_target_properties(OpenGLRenderer PROPERTIES
+        WIN32_EXECUTABLE $<CONFIG:Release>)
+endif()
+
+target_include_directories(OpenGLRenderer PRIVATE src/headers)
 target_link_libraries(OpenGLRenderer PRIVATE
     glad
     glfw

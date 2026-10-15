@@ -4,13 +4,13 @@ A small, OpenGL 3.3 renderer written in C++20.
 
 I'm learning as I build it, with the long-term goal of turning it into a renderer for a game.
 
-Currently supports loading OBJ meshes, configuring lighting, and changing basic window and rendering settings through JSON configuration.
+Currently loads OBJ meshes, applies fixed diffuse lighting, and reads window size, title, VSync, and wireframe settings from JSON.
 
 <img src=".github/docs/images/renderer.png" alt="Renderer screenshot" width="500">
 
 ---
 
-**Status:** Early development (`v0.2.1`).
+**Status:** Early development (`v0.2.3`).
 
 > [!WARNING]
 > The code changes frequently, and APIs and features may not be stable yet.
@@ -151,6 +151,8 @@ The [`Build`](.github/workflows/build.yml) workflow configures and builds both D
 
 The Markdown files in [`docs/wiki/`](docs/wiki/) are the source for the GitHub wiki. Do not edit published wiki pages directly because the [`Publish wiki`](.github/workflows/publish-wiki.yml) workflow replaces the wiki contents with this directory.
 
+The [architecture guide](docs/wiki/Architecture.md) describes how startup, settings, assets, OpenGL rendering, and resource lifetime fit together. The [project structure page](docs/wiki/Project-structure.md) maps those responsibilities to files.
+
 Before the first publish:
 
 1. Confirm the repository wiki is enabled in GitHub's repository settings.
@@ -175,6 +177,8 @@ On first launch, the default settings template at [`assets/config/settings.json`
 
 Window size, title, wireframe mode, and VSync are configured there. Delete the user settings file to recreate it from the shipped default template.
 
+Missing settings keys keep their built-in defaults and produce a `WARN` log entry. Invalid values produce a configuration error and a nonzero exit code. On Windows, Debug writes logs to its console; Release has no console window and writes startup output to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log`.
+
 > [!TIP]
 > Press `Esc` to quit.
 
@@ -182,7 +186,8 @@ Window size, title, wireframe mode, and VSync are configured there. Delete the u
 
 | Path | Purpose |
 | --- | --- |
-| [`src/`](src/) | C++ sources and headers (`.hpp` files beside their corresponding `.cpp` files) |
+| [`src/`](src/) | C++ implementation files and the application entry point |
+| [`src/headers/`](src/headers/) | Project-owned C++ declarations included by the renderer sources |
 | [`assets/`](assets/) | Shipped, read-only shaders, meshes, textures, and default configuration, copied beside the executable during the build |
 | [`third_party/`](third_party/) | GLAD, the OpenGL function loader; generated code kept in the repository |
 | [`cmake/`](cmake/) | Helper scripts used by CMake |

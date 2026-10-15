@@ -72,7 +72,6 @@ std::filesystem::path assetPath(const std::filesystem::path& relative)
     return executableDir() / "assets" / relative;
 }
 
-namespace {
 std::filesystem::path userDataDir()
 {
 #ifdef _WIN32
@@ -96,7 +95,6 @@ std::filesystem::path userDataDir()
     }
     return std::filesystem::path(home) / ".local" / "share" / "openglrenderer";
 #endif
-}
 }
 
 std::filesystem::path userSettingsPath()

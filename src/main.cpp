@@ -10,6 +10,8 @@
 #include "Window.hpp"
 
 #include <cmath>
+#include <cstdio>
+#include <system_error>
 
 namespace {
 struct RenderState {
@@ -72,6 +74,25 @@ void redrawWindow(GLFWwindow* window)
 
 int main()
 {
+#if defined(_WIN32) && defined(NDEBUG)
+    try {
+        const std::filesystem::path logDirectory = userDataDir();
+        std::error_code error;
+        std::filesystem::create_directories(logDirectory, error);
+        if (!error) {
+            const std::string logPath = (logDirectory / "openglrenderer.log").string();
+            const auto redirectStream = [&](FILE* stream, const char* mode) {
+                FILE* redirected = nullptr;
+                return freopen_s(&redirected, logPath.c_str(), mode, stream) == 0 && redirected != nullptr;
+            };
+            const bool errorRedirected = redirectStream(stderr, "w");
+            const bool outputRedirected = redirectStream(stdout, errorRedirected ? "a" : "w");
+            (void)outputRedirected;
+        }
+    } catch (...) {
+    }
+#endif
+
     try {
         const Settings settings = loadSettings(userSettingsPath().string());
 

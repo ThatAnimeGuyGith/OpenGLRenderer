@@ -1,6 +1,7 @@
 #include "Settings.hpp"
 
 #include "Error.hpp"
+#include "Log.hpp"
 
 #include <cstdint>
 #include <format>
@@ -18,8 +19,13 @@ constexpr std::int64_t kMaxWindowSize = 16384;
 template <typename T>
 T readValue(const json& window, const char* key, const T& fallback, const std::string& path)
 {
+    if (!window.contains(key)) {
+        Log::warn("{}: window.{} is missing; using the default value", path, key);
+        return fallback;
+    }
+
     try {
-        return window.value(key, fallback);
+        return window.at(key).get<T>();
     } catch (const json::type_error&) {
         throw RendererError(
             ErrorCategory::Config,
