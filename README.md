@@ -4,16 +4,16 @@ A small, OpenGL 3.3 renderer written in C++20.
 
 I'm learning as I build it, with the long-term goal of turning it into a renderer for a game.
 
-Currently supports loading OBJ meshes, configuring lighting, and changing basic window and rendering settings through JSON configuration.
+Currently loads OBJ meshes, applies fixed diffuse lighting, and reads window size, title, VSync, and wireframe settings from JSON.
 
 <img src=".github/docs/images/renderer.png" alt="Renderer screenshot" width="500">
 
 ---
 
-**Status:** Early development (`v0.2.1`).
+**Status:** Early development (`v0.2.3`).
 
 > [!WARNING]
-> The code changes frequently, and APIs and features may not stable yet.
+> The code changes frequently, and APIs and features may not be stable yet.
 
 ---
 
@@ -35,7 +35,7 @@ Currently supports loading OBJ meshes, configuring lighting, and changing basic 
 
 ## Building
 
-You need a C++20 compiler, CMake 3.24 or newer, Ninja, and Git.
+You need a C++20 compiler with `<format>` support, CMake 3.24 or newer, Ninja, and Git. On GCC that means version 13 or newer. Ubuntu 22.04 and Debian 12 ship older compilers by default, so use Ubuntu 24.04 or newer, or install a newer GCC.
 
 CMake manages GLFW, nlohmann/json, and tinyobjloader. On Linux, it uses system-installed GLFW and nlohmann/json when available; otherwise, it downloads and builds them.
 
@@ -45,6 +45,8 @@ CMake manages GLFW, nlohmann/json, and tinyobjloader. On Linux, it uses system-i
 **Actively tested platforms:**
 - [Windows (MSYS2 / MinGW-w64)](#windows-msys2-mingw-w64)
 - [Linux](#linux)
+
+macOS builds in CI and has startup code for it (executable path lookup and a forward-compatible OpenGL context), but nobody has run the renderer on a Mac yet. Treat it as untested.
 
 You can follow the platform-specific instructions *below* to set up and build the project:
 
@@ -137,7 +139,7 @@ cmake --preset release
 cmake --build --preset release --target package_release
 ```
 
-This creates a ready-to-run program folder and a ZIP archive under the generated `release/` directory. The package directory uses the project version and build date.
+This creates a ready-to-run program folder and a ZIP archive under the generated `release/` directory. The package directory uses the project version and build date. The package contains the executable, `assets/`, `LICENSE`, `README.md`, and `THIRD_PARTY_LICENSES.txt`.
 
 The version number comes from `project(... VERSION ...)` in [`CMakeLists.txt`](CMakeLists.txt). Change it there to update the project version used for packaging.
 
@@ -148,6 +150,8 @@ The [`Build`](.github/workflows/build.yml) workflow configures and builds both D
 ## GitHub wiki
 
 The Markdown files in [`docs/wiki/`](docs/wiki/) are the source for the GitHub wiki. Do not edit published wiki pages directly because the [`Publish wiki`](.github/workflows/publish-wiki.yml) workflow replaces the wiki contents with this directory.
+
+The [architecture guide](docs/wiki/Architecture.md) describes how startup, settings, assets, OpenGL rendering, and resource lifetime fit together. The [project structure page](docs/wiki/Project-structure.md) maps those responsibilities to files.
 
 Before the first publish:
 
@@ -173,6 +177,8 @@ On first launch, the default settings template at [`assets/config/settings.json`
 
 Window size, title, wireframe mode, and VSync are configured there. Delete the user settings file to recreate it from the shipped default template.
 
+Missing settings keys keep their built-in defaults and produce a `WARN` log entry. Invalid values produce a configuration error and a nonzero exit code. On Windows, Debug writes logs to its console; Release has no console window and writes startup output to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log`.
+
 > [!TIP]
 > Press `Esc` to quit.
 
@@ -180,7 +186,8 @@ Window size, title, wireframe mode, and VSync are configured there. Delete the u
 
 | Path | Purpose |
 | --- | --- |
-| [`src/`](src/) | C++ sources and headers (`.hpp` files beside their corresponding `.cpp` files) |
+| [`src/`](src/) | C++ implementation files and the application entry point |
+| [`src/headers/`](src/headers/) | Project-owned C++ declarations included by the renderer sources |
 | [`assets/`](assets/) | Shipped, read-only shaders, meshes, textures, and default configuration, copied beside the executable during the build |
 | [`third_party/`](third_party/) | GLAD, the OpenGL function loader; generated code kept in the repository |
 | [`cmake/`](cmake/) | Helper scripts used by CMake |
@@ -220,6 +227,8 @@ You agree to license the contribution under the same terms as the project and gr
 | [glad](https://github.com/Dav1dde/glad) 0.1.36 | OpenGL function loader | MIT / public domain |
 | [nlohmann/json](https://github.com/nlohmann/json) 3.12.0 | JSON parsing | MIT |
 | [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) 2.0.0rc13 | Wavefront OBJ loading | MIT |
+
+The full license texts are in [`THIRD_PARTY_LICENSES.txt`](THIRD_PARTY_LICENSES.txt), which is also included in release packages. Update it when you change a pinned version.
 
 The cube demo mesh was created by Morgan McGuire and released into the public domain.
 Its source and attribution are documented in [`assets/meshes/cube/cube.obj`](assets/meshes/cube/cube.obj).

@@ -1,7 +1,15 @@
 cmake_minimum_required(VERSION 3.24)
 
 # The version lives here and nowhere else. The release script reads it.
-project(OpenGLRenderer VERSION 0.2.1 LANGUAGES C CXX)
+project(OpenGLRenderer VERSION 0.2.3 LANGUAGES C CXX)
+
+# <format> arrived in GCC 13. Fail here, with a clear
+# message, instead of deep inside the compiler with "format: No such file".
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+    message(FATAL_ERROR
+        "GCC ${CMAKE_CXX_COMPILER_VERSION} is too old. OpenGLRenderer uses <format>, "
+        "which needs GCC 13 or newer. Ubuntu 22.04 and Debian 12 ship older compilers by default.")
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -66,9 +74,21 @@ add_executable(OpenGLRenderer
     src/Settings.cpp
     src/Shader.cpp
     src/Window.cpp
+    src/headers/Error.hpp
+    src/headers/Log.hpp
+    src/headers/ObjMesh.hpp
+    src/headers/Paths.hpp
+    src/headers/Settings.hpp
+    src/headers/Shader.hpp
+    src/headers/Window.hpp
 )
 
-target_include_directories(OpenGLRenderer PRIVATE src)
+if(WIN32)
+    set_target_properties(OpenGLRenderer PROPERTIES
+        WIN32_EXECUTABLE $<CONFIG:Release>)
+endif()
+
+target_include_directories(OpenGLRenderer PRIVATE src/headers)
 target_link_libraries(OpenGLRenderer PRIVATE
     glad
     glfw
@@ -97,7 +117,7 @@ endif()
 # ---------------------------------------------------------------------------
 add_custom_target(copy_assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/assets"
+            "${PROJECT_SOURCE_DIR}/assets"
             "$<TARGET_FILE_DIR:OpenGLRenderer>/assets"
     COMMENT "Synchronizing assets next to the executable"
 )
@@ -109,9 +129,14 @@ add_dependencies(OpenGLRenderer copy_assets)
 #   cmake --build --preset release --target package_release
 # Output: release/<version>_<date>/OpenGLRenderer-<version>/ and a .zip of it
 # ---------------------------------------------------------------------------
-install(TARGETS OpenGLRenderer RUNTIME DESTINATION .)
-install(DIRECTORY assets DESTINATION .)
-install(FILES LICENSE README.md DESTINATION .)
+#
+# Everything is tagged COMPONENT Runtime, and package_release installs only that
+# component. Dependencies fetched with FetchContent bring their own install
+# rules (tinyobjloader adds include/, lib/ and share/), and those rules have no
+# component, so they stay out of the release.
+install(TARGETS OpenGLRenderer RUNTIME DESTINATION . COMPONENT Runtime)
+install(DIRECTORY assets DESTINATION . COMPONENT Runtime)
+install(FILES LICENSE README.md THIRD_PARTY_LICENSES.txt DESTINATION . COMPONENT Runtime)
 
 string(TOLOWER "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}" RELEASE_PLATFORM)
 
@@ -119,9 +144,9 @@ add_custom_target(package_release
     COMMAND ${CMAKE_COMMAND}
             -DVERSION=${PROJECT_VERSION}
             -DPLATFORM=${RELEASE_PLATFORM}
-            -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
-            -DBINARY_DIR=${CMAKE_BINARY_DIR}
-            -P ${CMAKE_SOURCE_DIR}/cmake/MakeRelease.cmake
+            -DSOURCE_DIR=${PROJECT_SOURCE_DIR}
+            -DBINARY_DIR=${PROJECT_BINARY_DIR}
+            -P ${PROJECT_SOURCE_DIR}/cmake/MakeRelease.cmake
     DEPENDS OpenGLRenderer
     COMMENT "Packaging release ${PROJECT_VERSION}"
     VERBATIM

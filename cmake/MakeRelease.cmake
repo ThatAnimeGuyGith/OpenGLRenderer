@@ -12,7 +12,7 @@ file(REMOVE_RECURSE "${OUT_DIR}")
 file(MAKE_DIRECTORY "${OUT_DIR}")
 
 execute_process(
-    COMMAND ${CMAKE_COMMAND} --install "${BINARY_DIR}" --prefix "${STAGE_DIR}"
+    COMMAND ${CMAKE_COMMAND} --install "${BINARY_DIR}" --prefix "${STAGE_DIR}" --component Runtime
     COMMAND_ERROR_IS_FATAL ANY
 )
 

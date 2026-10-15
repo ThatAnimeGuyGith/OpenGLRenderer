@@ -2,10 +2,12 @@
 
 #include "Error.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 #include <system_error>
+#include <vector>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -13,8 +15,12 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
-#else
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#elif defined(__linux__)
 #include <unistd.h>
+#else
+#error "executableDir() is not implemented for this platform. Add a branch in Paths.cpp."
 #endif
 
 std::filesystem::path executableDir()
@@ -28,6 +34,26 @@ std::filesystem::path executableDir()
             "Could not determine the executable path");
     }
     return std::filesystem::path(buffer).parent_path();
+#elif defined(__APPLE__)
+    // macOS has no /proc. The first call fails on purpose and reports the
+    // buffer size it needs.
+    std::uint32_t size = 0;
+    _NSGetExecutablePath(nullptr, &size);
+    if (size == 0) {
+        throw RendererError(
+            ErrorCategory::Io,
+            "Could not determine the executable path");
+    }
+    std::vector<char> buffer(size);
+    if (_NSGetExecutablePath(buffer.data(), &size) != 0) {
+        throw RendererError(
+            ErrorCategory::Io,
+            "Could not determine the executable path");
+    }
+    // The returned path can contain symlinks or "..", so resolve it.
+    std::error_code error;
+    const std::filesystem::path resolved = std::filesystem::canonical(buffer.data(), error);
+    return (error ? std::filesystem::path(buffer.data()) : resolved).parent_path();
 #else
     char buffer[4096];
     const ssize_t length = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
@@ -46,7 +72,6 @@ std::filesystem::path assetPath(const std::filesystem::path& relative)
     return executableDir() / "assets" / relative;
 }
 
-namespace {
 std::filesystem::path userDataDir()
 {
 #ifdef _WIN32
@@ -70,7 +95,6 @@ std::filesystem::path userDataDir()
     }
     return std::filesystem::path(home) / ".local" / "share" / "openglrenderer";
 #endif
-}
 }
 
 std::filesystem::path userSettingsPath()

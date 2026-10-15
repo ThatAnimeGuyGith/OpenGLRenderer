@@ -10,6 +10,8 @@
 #include "Window.hpp"
 
 #include <cmath>
+#include <cstdio>
+#include <system_error>
 
 namespace {
 struct RenderState {
@@ -72,6 +74,25 @@ void redrawWindow(GLFWwindow* window)
 
 int main()
 {
+#if defined(_WIN32) && defined(NDEBUG)
+    try {
+        const std::filesystem::path logDirectory = userDataDir();
+        std::error_code error;
+        std::filesystem::create_directories(logDirectory, error);
+        if (!error) {
+            const std::string logPath = (logDirectory / "openglrenderer.log").string();
+            const auto redirectStream = [&](FILE* stream, const char* mode) {
+                FILE* redirected = nullptr;
+                return freopen_s(&redirected, logPath.c_str(), mode, stream) == 0 && redirected != nullptr;
+            };
+            const bool errorRedirected = redirectStream(stderr, "w");
+            const bool outputRedirected = redirectStream(stdout, errorRedirected ? "a" : "w");
+            (void)outputRedirected;
+        }
+    } catch (...) {
+    }
+#endif
+
     try {
         const Settings settings = loadSettings(userSettingsPath().string());
 
@@ -112,7 +133,12 @@ int main()
         glfwSetWindowRefreshCallback(window, nullptr);
         glfwSetWindowUserPointer(window, nullptr);
         glDeleteProgram(shaderProgram);
-        glfwDestroyWindow(window);
+
+        // The window is deliberately not destroyed here. Destroying it also
+        // destroys its OpenGL context, and `cube` still has to delete its
+        // buffers when it goes out of scope after this return. `glfw` is
+        // declared first, so it is destroyed last, and glfwTerminate()
+        // closes the window once every GL object is gone.
         return 0;
     } catch (const RendererError& e) {
         Log::error(e.what());
