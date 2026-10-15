@@ -25,6 +25,8 @@ Currently supports loading OBJ meshes, configuring lighting, and changing basic 
   - [Presets](#presets)
   - [VS Code](#vs-code)
   - [Making a release](#making-a-release)
+- [GitHub automation](#github-automation)
+- [GitHub wiki](#github-wiki)
 - [Running](#running)
 - [Project layout](#project-layout)
 - [License](#license)
@@ -138,6 +140,23 @@ cmake --build --preset release --target package_release
 This creates a ready-to-run program folder and a ZIP archive under the generated `release/` directory. The package directory uses the project version and build date.
 
 The version number comes from `project(... VERSION ...)` in [`CMakeLists.txt`](CMakeLists.txt). Change it there to update the project version used for packaging.
+
+## GitHub automation
+
+The [`Build`](.github/workflows/build.yml) workflow configures and builds the Debug preset on Ubuntu, macOS, and Windows for pushes, pull requests, and manual runs. Each platform build is available as a seven-day workflow artifact, including the executable and its shipped assets.
+
+## GitHub wiki
+
+The Markdown files in [`docs/wiki/`](docs/wiki/) are the source for the GitHub wiki. Do not edit published wiki pages directly because the [`Publish wiki`](.github/workflows/publish-wiki.yml) workflow replaces the wiki contents with this directory.
+
+Before the first publish:
+
+1. Confirm the repository wiki is enabled in GitHub's repository settings.
+2. Create a personal access token restricted to this repository with permission to write repository contents. A classic token needs the `repo` scope.
+3. Save it as the repository Actions secret `WIKI_TOKEN`.
+4. Run **Publish wiki** manually from the Actions tab.
+
+After that, pushes to `main` that change `docs/wiki/` publish the updated wiki automatically.
 
 ## Running
 

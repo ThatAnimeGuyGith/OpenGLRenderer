@@ -1,0 +1,82 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu
+            os: ubuntu-latest
+          - name: macOS
+            os: macos-latest
+          - name: Windows
+            os: windows-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            libwayland-dev libxkbcommon-dev wayland-protocols \
+            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+
+      - name: Set up MSYS2
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            git
+
+      - name: Configure Debug build on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: cmake --preset debug
+
+      - name: Configure Debug build on Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: cmake --preset debug
+
+      - name: Build Debug target on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: cmake --build --preset debug
+
+      - name: Build Debug target on Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: cmake --build --preset debug
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenGLRenderer-${{ matrix.name }}
+          path: |
+            build/debug/OpenGLRenderer*
+            build/debug/assets
+          if-no-files-found: error
+          retention-days: 7
