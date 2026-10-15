@@ -1,149 +1,206 @@
 # OpenGL Renderer
 
-A small OpenGL 3.3 renderer written in C++20.
-I am learning as I write and the long-term plan is making it into a renderer for a game.
+A small, OpenGL 3.3 renderer written in C++20.
 
-Right now, it loads lights and a small cube OBJ mesh.
+I'm learning as I build it, with the long-term goal of turning it into a renderer for a game.
 
-**Status:** Early development (v0.2.0).
+Currently supports loading OBJ meshes, configuring lighting, and changing basic window and rendering settings through JSON configuration.
+
+<img src=".github/docs/images/renderer.png" alt="Renderer screenshot" width="500">
+
+---
+
+**Status:** Early development (`v0.2.1`).
 
 > [!WARNING]
-> The code changes often and nothing here is stable yet.
+> The code changes frequently, and APIs and features may not stable yet.
+
+---
+
+## Contents
+
+- [Building](#building)
+  - [Windows (MSYS2, MinGW-w64)](#windows-msys2-mingw-w64)
+  - [Linux](#linux)
+  - [Presets](#presets)
+  - [VS Code](#vs-code)
+  - [Making a release](#making-a-release)
+- [Running](#running)
+- [Project layout](#project-layout)
+- [License](#license)
+- [Contributing](#contributing)
+- [Third-party software](#third-party-software)
 
 ## Building
 
-You need a C++20 compiler, CMake 3.24 or newer, Ninja, and git.
+You need a C++20 compiler, CMake 3.24 or newer, Ninja, and Git.
 
-CMake downloads GLFW, nlohmann/json, and tinyobjloader the first time you configure.
+CMake manages GLFW, nlohmann/json, and tinyobjloader. On Linux, it uses system-installed GLFW and nlohmann/json when available; otherwise, it downloads and builds them.
+
+> [!NOTE]
+> An internet connection may be required when configuring a fresh build.
 
 **Actively tested platforms:**
-- Windows (MSYS2 / MinGW-w64)
-- Linux
+- [Windows (MSYS2 / MinGW-w64)](#windows-msys2-mingw-w64)
+- [Linux](#linux)
 
-You can find instructions to setting up the project yourself *bellow*:
-
+You can follow the platform-specific instructions *below* to set up and build the project:
 
 ### Windows (MSYS2, MinGW-w64)
 
 1. Install [MSYS2](https://www.msys2.org/).
-2. In an MSYS2 UCRT64 terminal, install the tools:
-   ```
+2. Open an MSYS2 UCRT64 terminal and install the required tools:
+
+   ```bash
    pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja git
    ```
-3. Add `C:\msys64\ucrt64\bin` to your `PATH` so `g++` works in PowerShell and VS Code.
-4. Build and run:
-   ```
+
+3. Add `C:\msys64\ucrt64\bin` to your `PATH` so `g++` is available in PowerShell and VS Code.
+4. From the repository root, configure and build the Debug preset:
+
+   ```bash
    cmake --preset debug
    cmake --build --preset debug
+   ```
+
+5. Run the executable:
+
+   ```powershell
    .\build\debug\OpenGLRenderer.exe
    ```
 
 ### Linux
 
-Arch and derivatives (CachyOS, Manjaro, etc.):
+**Arch Linux and derivatives** *(CachyOS, Manjaro, etc.)*:
 
-```
+```bash
 sudo pacman -S base-devel cmake ninja git glfw nlohmann-json
 ```
 
-Debian and Ubuntu:
+**Debian and Ubuntu:**
 
-```
+```bash
 sudo apt install build-essential cmake ninja-build git pkg-config \
     libwayland-dev libxkbcommon-dev wayland-protocols \
     libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
 ```
 
-Then:
+Configure and build the Debug preset:
 
-```
+```bash
 cmake --preset debug
 cmake --build --preset debug
+```
+
+Run the executable from the repository root:
+
+```bash
 ./build/debug/OpenGLRenderer
 ```
 
 > [!NOTE]
-> On Linux, CMake uses your system's GLFW and nlohmann/json when they are installed.
-> If they are not, it downloads and builds them, which needs the X11/Wayland development packages listed above.
+> On Linux, CMake uses system-installed GLFW and nlohmann/json when available.
+> If they are not installed, CMake downloads and builds them, which requires the X11/Wayland development packages listed above.
 
 ### Presets
 
-|  Preset   |                      Build Config                     | Output directory |
-| --------- | ----------------------------------------------------- | ---------------- |
-| `debug`   | Debug, with compiler optimizations typically disabled | `build/debug/`   |
-| `release` | Optimized Release build                               | `build/release/` |
+| Preset | Build configuration | Output directory |
+| --- | --- | --- |
+| `debug` | Debug build, typically with compiler optimizations disabled | `build/debug/` |
+| `release` | Optimized Release build | `build/release/` |
 
-Use either name with `cmake --preset <name>` and `cmake --build --preset <name>`.
+Use either preset name with:
+
+```bash
+cmake --preset <name>
+cmake --build --preset <name>
+```
+
+Replace `<name>` with `debug` or `release`.
 
 ### VS Code
 
-Install the recommended C/C++ and CMake Tools extensions when VS Code prompts you. Opening the repository configures the Debug preset and gives IntelliSense the generated compile commands.
+Install the recommended C/C++ and CMake Tools extensions when VS Code prompts you to do so.
 
-Use `Ctrl+Shift+B` to configure and build the Debug target, then run the `OpenGL Renderer: run Debug` task from `Terminal: Run Task`.
+Opening the repository configures the Debug preset and provides IntelliSense with the generated compile commands.
+
+Use `Ctrl+Shift+B` to configure and build the Debug target, then run the **OpenGL Renderer: run Debug** task from **Terminal: Run Task**.
 
 ### Making a release
 
-```
+Configure and build the release packaging target:
+
+```bash
 cmake --preset release
 cmake --build --preset release --target package_release
 ```
 
-This creates `release/<version>_<date>/` with a ready-to-run program folder and a `.zip` of it. The version number comes from `project(... VERSION ...)` in `CMakeLists.txt`. Change it there.
+This creates a ready-to-run program folder and a ZIP archive under the generated `release/` directory. The package directory uses the project version and build date.
+
+The version number comes from `project(... VERSION ...)` in [`CMakeLists.txt`](CMakeLists.txt). Change it there to update the project version used for packaging.
 
 ## Running
 
-The program reads `assets/` next to the executable, so you can start it from any working directory.
-Every build copies `assets/` beside the executable.
+The program reads shipped, read-only content from the `assets/` directory next to the executable, so you can launch it from any working directory. Meshes, textures, shaders, and other large game content belong there rather than inside the executable.
 
-To test shader or configuration changes without recompiling C++, edit the copied assets next to the executable.
-Changes made in the repository's source `assets/` directory are copied on the next build.
+Every build copies the repository's [`assets/`](assets/) directory beside the executable.
 
-Window size, title, and wireframe mode are set in `assets/config/settings.json`.
+To test shader or mesh changes without recompiling C++, edit the copied assets next to the executable. Changes made in the repository's source `assets/` directory are copied on the next build.
+
+On first launch, the default settings template at [`assets/config/settings.json`](assets/config/settings.json) is copied to a writable per-user file. The renderer then reads settings from that user file and never overwrites it:
+
+- Windows: `%LOCALAPPDATA%\OpenGLRenderer\settings.json`
+- Linux: `$XDG_DATA_HOME/openglrenderer/settings.json`, or `~/.local/share/openglrenderer/settings.json` when `XDG_DATA_HOME` is unset
+
+Window size, title, wireframe mode, and VSync are configured there. Delete the user settings file to recreate it from the shipped default template.
 
 > [!TIP]
 > Press `Esc` to quit.
 
 ## Project layout
 
-|     Path     |                             Use                             |
-|--------------|-------------------------------------------------------------|
-| src/         |  C++ sources and headers (.hpp beside .cpp)                 |
-| assets/      | Shaders and config, placed next to the executable on build  |
-| third_party/ | glad, the OpenGL loader (generated code, kept in the repo)  |
-| cmake/       | Helper scripts used by CMake                                |
-| build/       | Build output (ignored by git)                               |
-| release/     | Packaged releases (ignored by git)                          |
+| Path | Purpose |
+| --- | --- |
+| [`src/`](src/) | C++ sources and headers (`.hpp` files beside their corresponding `.cpp` files) |
+| [`assets/`](assets/) | Shipped, read-only shaders, meshes, textures, and default configuration, copied beside the executable during the build |
+| [`third_party/`](third_party/) | GLAD, the OpenGL function loader; generated code kept in the repository |
+| [`cmake/`](cmake/) | Helper scripts used by CMake |
+| `build/` | Build output, ignored by Git |
+| `release/` | Packaged releases, ignored by Git |
 
 ## License
 
-This project uses the [PolyForm Noncommercial License 1.0.0](LICENSE). In plain terms:
+This project uses the [PolyForm Noncommercial License 1.0.0](LICENSE).
 
-- You can read the code, learn from it, and run it for noncommercial purposes.
-- You can fork it and make changes for noncommercial purposes.
-- You **cannot** sell it or use it commercially.
+In plain terms:
 
-If you share it, you must include the license text and the `Required Notice:` line from `LICENSE`. Please link to this repository instead of re-uploading builds to other sites, so people always get the current version.
+- You can read the code, learn from it, and use it for noncommercial purposes.
+- You can fork the project and make changes for noncommercial purposes.
+- You **cannot use the project commercially** under this license without separate permission.
 
-The `LICENSE` file is the only legally binding text. This summary is a convenience and does not change it.
+If you redistribute the project, you must comply with the license conditions, including retaining the license text and the `Required Notice:` line from [`LICENSE`](LICENSE).
 
-> [!IMPORTANT]
-> GitHub still lets people fork a public repo under GitHub's own terms.
-> Noncommercial redistribution is permitted subject to the license's conditions, so please link to this repository instead of rehosting builds, so users can find the latest version.
+Please link to this repository instead of rehosting builds, so users can find the latest version.
+
+The [`LICENSE`](LICENSE) file contains the full license terms. This summary is provided for convenience and does not replace or modify them.
 
 ## Contributing
 
 Issues and pull requests are welcome.
-By submitting a contribution, you confirm that you wrote it *(or have the right to submit it)* and that you license it under the same terms as the project, and also grant the project owner the right to use it in commercial releases of this project or of games built from it.
 
-**If you are not comfortable with that, please open an issue to discuss the idea instead.**
+By submitting a contribution, you confirm that you wrote it or have the right to submit it.
+You agree to license the contribution under the same terms as the project and grant the project owner the right to use it in commercial releases of this project or of games built from it.
+
+**If you are not comfortable with these terms, please open an issue to discuss them before submitting a contribution.**
 
 ## Third-party software
 
 | Library | Purpose | License |
-| ------- | ------- | ------- |
-| [GLFW](https://www.glfw.org/) 3.5.1 | Window, input, OpenGL context | zlib |
+| --- | --- | --- |
+| [GLFW](https://www.glfw.org/) 3.5.1 | Window creation, input, and OpenGL context management | zlib |
 | [glad](https://github.com/Dav1dde/glad) 0.1.36 | OpenGL function loader | MIT / public domain |
 | [nlohmann/json](https://github.com/nlohmann/json) 3.12.0 | JSON parsing | MIT |
 | [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) 2.0.0rc13 | Wavefront OBJ loading | MIT |
 
-The cube demo mesh was created by Morgan McGuire and released into the public domain. Its source is noted in `assets/meshes/cube/cube.obj`.
+The cube demo mesh was created by Morgan McGuire and released into the public domain.
+Its source and attribution are documented in [`assets/meshes/cube/cube.obj`](assets/meshes/cube/cube.obj).

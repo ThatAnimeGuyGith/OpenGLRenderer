@@ -16,7 +16,8 @@ public:
 GLFWwindow* createOpenGLWindow(
     const std::string& title,
     unsigned int width,
-    unsigned int height);
+    unsigned int height,
+    bool vSync);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);

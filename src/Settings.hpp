@@ -7,6 +7,7 @@ struct Settings {
     unsigned int height = 600;
     std::string title;
     bool wireframe = false;
+    bool vSync = true;
 };
 
 Settings loadSettings(const std::string& path);

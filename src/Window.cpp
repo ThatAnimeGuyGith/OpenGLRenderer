@@ -24,7 +24,8 @@ GlfwSession::~GlfwSession()
 GLFWwindow* createOpenGLWindow(
     const std::string& title,
     unsigned int width,
-    unsigned int height)
+    unsigned int height,
+    bool vSync)
 {
     GLFWwindow* window =
         glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), title.c_str(), nullptr, nullptr);
@@ -34,6 +35,7 @@ GLFWwindow* createOpenGLWindow(
     }
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(vSync ? 1 : 0);
 
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         glfwDestroyWindow(window);

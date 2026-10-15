@@ -26,6 +26,7 @@ Settings loadSettings(const std::string& path)
         settings.height = window.at("height").get<unsigned int>();
         settings.title = window.at("title").get<std::string>();
         settings.wireframe = window.at("wireframe").get<bool>();
+        settings.vSync = window.at("vSync").get<bool>();
         return settings;
     } catch (const json::exception& e) {
         throw RendererError(

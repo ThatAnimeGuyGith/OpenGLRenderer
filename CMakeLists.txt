@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 # The version lives here and nowhere else. The release script reads it.
-project(OpenGLRenderer VERSION 0.1.0 LANGUAGES C CXX)
+project(OpenGLRenderer VERSION 0.2.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
