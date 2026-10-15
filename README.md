@@ -143,7 +143,7 @@ The version number comes from `project(... VERSION ...)` in [`CMakeLists.txt`](C
 
 ## GitHub automation
 
-The [`Build`](.github/workflows/build.yml) workflow configures and builds both Debug and Release presets on Ubuntu, macOS, and Windows for pushes, pull requests, and manual runs. It uploads only the Release executable and shipped assets for each platform as seven-day workflow artifacts.
+The [`Build`](.github/workflows/build.yml) workflow configures and builds both Debug and Release presets on Ubuntu, macOS, and Windows for pull requests targeting `main`, pushes to `main`, and manual runs. Feature-branch builds run through their pull request instead of on every branch push. It uploads only the Release executable and shipped assets for each platform on `main` pushes and manual runs; pull request builds do not create artifacts. Artifacts are retained for seven days.
 
 ## GitHub wiki
 
