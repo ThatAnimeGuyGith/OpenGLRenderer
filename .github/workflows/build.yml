@@ -18,6 +18,7 @@ jobs:
   build:
     name: ${{ matrix.name }} (${{ matrix.build_type }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -45,6 +46,12 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v6
 
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/${{ matrix.build_type }}/_deps
+          key: fetchcontent-${{ runner.os }}-${{ matrix.build_type }}-${{ hashFiles('CMakeLists.txt') }}
+
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         run: |
@@ -68,12 +75,12 @@ jobs:
       - name: Configure build on Unix
         if: runner.os != 'Windows'
         shell: bash
-        run: cmake --preset ${{ matrix.build_type }}
+        run: cmake --preset ${{ matrix.build_type }} -DFETCHCONTENT_UPDATES_DISCONNECTED=ON
 
       - name: Configure build on Windows
         if: runner.os == 'Windows'
         shell: msys2 {0}
-        run: cmake --preset ${{ matrix.build_type }}
+        run: cmake --preset ${{ matrix.build_type }} -DFETCHCONTENT_UPDATES_DISCONNECTED=ON
 
       - name: Build target on Unix
         if: runner.os != 'Windows'
