@@ -1,0 +1,100 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }} (${{ matrix.build_type }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu
+            os: ubuntu-latest
+            build_type: debug
+          - name: Ubuntu
+            os: ubuntu-latest
+            build_type: release
+          - name: macOS
+            os: macos-latest
+            build_type: debug
+          - name: macOS
+            os: macos-latest
+            build_type: release
+          - name: Windows
+            os: windows-latest
+            build_type: debug
+          - name: Windows
+            os: windows-latest
+            build_type: release
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            libwayland-dev libxkbcommon-dev wayland-protocols \
+            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+
+      - name: Set up MSYS2
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            git
+
+      - name: Configure build on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: cmake --preset ${{ matrix.build_type }}
+
+      - name: Configure build on Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: cmake --preset ${{ matrix.build_type }}
+
+      - name: Build target on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: cmake --build --preset ${{ matrix.build_type }}
+
+      - name: Build target on Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: cmake --build --preset ${{ matrix.build_type }}
+
+      - name: Upload Release build output
+        if: >-
+          matrix.build_type == 'release' &&
+          (github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenGLRenderer-${{ matrix.name }}-Release
+          path: |
+            build/release/OpenGLRenderer*
+            build/release/assets
+          if-no-files-found: error
+          retention-days: 7
