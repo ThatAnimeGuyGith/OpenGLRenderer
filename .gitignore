@@ -1,3 +1,5 @@
-/build/*
-!/build/.gitkeep
-learning
+/build/
+/release/
+/learning/
+.cache/
+compile_commands.json
