@@ -71,6 +71,8 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             git
+        env:
+          CACHE_KEY: msys2-${{ matrix.build_type }}
 
       - name: Configure build on Unix
         if: runner.os != 'Windows'
