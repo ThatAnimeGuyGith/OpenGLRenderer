@@ -42,7 +42,31 @@ unsigned int readWindowSize(
     unsigned int fallback,
     const std::string& path)
 {
-    const std::int64_t value = readValue<std::int64_t>(window, key, static_cast<std::int64_t>(fallback), path);
+    if (!window.contains(key)) {
+        Log::warn("{}: window.{} is missing; using the default value", path, key);
+        return fallback;
+    }
+
+    const json& jsonValue = window.at(key);
+    if (!jsonValue.is_number_integer()) {
+        throw RendererError(
+            ErrorCategory::Config,
+            std::format("{}: window.{} has the wrong type", path, key));
+    }
+
+    std::int64_t value = 0;
+    if (jsonValue.is_number_unsigned()) {
+        const std::uint64_t unsignedValue = jsonValue.get<std::uint64_t>();
+        if (unsignedValue > static_cast<std::uint64_t>(kMaxWindowSize)) {
+            throw RendererError(
+                ErrorCategory::Config,
+                std::format("{}: window.{} must be between 1 and {}, got {}", path, key, kMaxWindowSize, unsignedValue));
+        }
+        value = static_cast<std::int64_t>(unsignedValue);
+    } else {
+        value = jsonValue.get<std::int64_t>();
+    }
+
     if (value < 1 || value > kMaxWindowSize) {
         throw RendererError(
             ErrorCategory::Config,

@@ -10,9 +10,6 @@ on:
 permissions:
   contents: read
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 concurrency:
   group: build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -97,16 +94,68 @@ jobs:
         shell: msys2 {0}
         run: cmake --build --preset ${{ matrix.build_type }}
 
+      - name: Run tests on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ctest --test-dir build/${{ matrix.build_type }} --output-on-failure -C ${{ matrix.build_type }}
+
+      - name: Run tests on Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: ctest --test-dir build/${{ matrix.build_type }} --output-on-failure -C ${{ matrix.build_type }}
+
+      - name: Package Release on Unix
+        if: matrix.build_type == 'release' && runner.os != 'Windows'
+        shell: bash
+        run: cmake --build --preset release --target package_release
+
+      - name: Package Release on Windows
+        if: matrix.build_type == 'release' && runner.os == 'Windows'
+        shell: msys2 {0}
+        run: cmake --build --preset release --target package_release
+
+      - name: Record release package path on Unix
+        if: matrix.build_type == 'release' && runner.os != 'Windows'
+        id: package_path_unix
+        shell: bash
+        run: |
+          package_path=$(cat build/release/release-package-path.txt)
+          test -f "$package_path"
+          echo "path=$package_path" >> "$GITHUB_OUTPUT"
+
+      - name: Record release package path on Windows
+        if: matrix.build_type == 'release' && runner.os == 'Windows'
+        id: package_path_windows
+        shell: pwsh
+        run: |
+          $packagePath = (Get-Content build/release/release-package-path.txt -Raw).Trim()
+          if (-not (Test-Path -LiteralPath $packagePath -PathType Leaf)) {
+            throw "Release package was not created: $packagePath"
+          }
+          "path=$packagePath" >> $env:GITHUB_OUTPUT
+
       - name: Upload Release build output
         if: >-
           matrix.build_type == 'release' &&
           (github.event_name == 'workflow_dispatch' ||
           (github.event_name == 'push' && github.ref == 'refs/heads/main'))
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OpenGLRenderer-${{ matrix.name }}-Release
           path: |
             build/release/OpenGLRenderer*
             build/release/assets
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Release package
+        if: >-
+          matrix.build_type == 'release' &&
+          (github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        uses: actions/upload-artifact@v7
+        with:
+          name: OpenGLRenderer-${{ matrix.name }}-Release-Package
+          path: ${{ steps.package_path_unix.outputs.path || steps.package_path_windows.outputs.path }}
           if-no-files-found: error
           retention-days: 7

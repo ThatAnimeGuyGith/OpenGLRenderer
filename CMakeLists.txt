@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 # The version lives here and nowhere else. The release script reads it.
-project(OpenGLRenderer VERSION 0.2.3 LANGUAGES C CXX)
+project(OpenGLRenderer VERSION 0.2.4 LANGUAGES C CXX)
 
 # <format> arrived in GCC 13. Fail here, with a clear
 # message, instead of deep inside the compiler with "format: No such file".
@@ -54,6 +54,8 @@ FetchContent_Declare(tinyobjloader
     GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(glfw nlohmann_json tinyobjloader)
+
+include(CTest)
 
 # glad is generated code, so it is committed in third_party/glad.
 add_library(glad STATIC third_party/glad/src/glad.c)
@@ -111,6 +113,25 @@ if(MINGW)
     target_link_options(OpenGLRenderer PRIVATE -static)
 endif()
 
+if(BUILD_TESTING)
+    add_executable(settings_tests
+        tests/SettingsTests.cpp
+        src/Settings.cpp
+        src/Error.cpp
+        src/Log.cpp
+    )
+    target_include_directories(settings_tests PRIVATE src/headers)
+    target_link_libraries(settings_tests PRIVATE nlohmann_json::nlohmann_json)
+
+    if(MSVC)
+        target_compile_options(settings_tests PRIVATE /W4)
+    else()
+        target_compile_options(settings_tests PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+
+    add_test(NAME settings COMMAND settings_tests)
+endif()
+
 # ---------------------------------------------------------------------------
 # Assets: copy them next to the executable on every build. This keeps shader
 # and configuration edits in sync even when no C++ source has changed.
@@ -144,8 +165,10 @@ add_custom_target(package_release
     COMMAND ${CMAKE_COMMAND}
             -DVERSION=${PROJECT_VERSION}
             -DPLATFORM=${RELEASE_PLATFORM}
+            -DEXECUTABLE_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}
             -DSOURCE_DIR=${PROJECT_SOURCE_DIR}
             -DBINARY_DIR=${PROJECT_BINARY_DIR}
+            -DPACKAGE_PATH_FILE=${PROJECT_BINARY_DIR}/release-package-path.txt
             -P ${PROJECT_SOURCE_DIR}/cmake/MakeRelease.cmake
     DEPENDS OpenGLRenderer
     COMMENT "Packaging release ${PROJECT_VERSION}"

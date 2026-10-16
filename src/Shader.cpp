@@ -5,7 +5,24 @@
 
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
+
+namespace {
+std::unordered_map<GLuint, std::unordered_map<std::string, GLint>> uniformLocationCache;
+
+GLint uniformLocation(GLuint program, const char* name)
+{
+    auto& locations = uniformLocationCache[program];
+    const auto found = locations.find(name);
+    if (found != locations.end())
+        return found->second;
+
+    const GLint location = glGetUniformLocation(program, name);
+    locations.emplace(name, location);
+    return location;
+}
+}
 
 std::string loadShaderSource(const std::filesystem::path& path)
 {
@@ -71,6 +88,7 @@ GLuint createShaderProgram(
     }
 
     const GLuint program = glCreateProgram();
+    uniformLocationCache.erase(program);
     glAttachShader(program, vertexShader);
     glAttachShader(program, fragmentShader);
     glLinkProgram(program);
@@ -101,9 +119,15 @@ GLuint createShaderProgram(
     return program;
 }
 
+void deleteShaderProgram(GLuint program)
+{
+    uniformLocationCache.erase(program);
+    glDeleteProgram(program);
+}
+
 void setUniformMatrix4(GLuint program, const char* name, const float* value)
 {
-    const GLint location = glGetUniformLocation(program, name);
+    const GLint location = uniformLocation(program, name);
     if (location >= 0)
         glUniformMatrix4fv(location, 1, GL_FALSE, value);
 }
