@@ -6,7 +6,7 @@ A small C++20 renderer for OpenGL 3.3. It opens a window, loads the included cub
 
 ---
 
-**Status:** Early development (`v0.2.3`).
+**Status:** Early development (`v0.2.4`).
 
 > [!WARNING]
 > The code changes frequently, and APIs and features may not be stable yet.

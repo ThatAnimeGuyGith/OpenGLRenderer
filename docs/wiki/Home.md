@@ -5,7 +5,7 @@
 The application opens a GLFW window, loads the included cube from a Wavefront OBJ file, and rotates it with fixed diffuse lighting.
 Window size, title, wireframe mode, and VSync come from a JSON settings file.
 
-<img src="../../.github/docs/videos/cubeSpin.gif" alt="Renderer screenshot" width="750">
+<img src="https://raw.githubusercontent.com/ThatAnimeGuyGith/OpenGLRenderer/main/.github/docs/videos/cubeSpin.gif" alt="Rotating cube rendered by OpenGLRenderer" width="750">
 
 > [!NOTE]
 > This wiki describes the current application, not planned renderer features.

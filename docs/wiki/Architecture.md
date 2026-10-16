@@ -6,7 +6,7 @@ The renderer is a small single-window application.
 Other modules handle settings, paths, the OpenGL window, shaders, mesh data, diagnostics, and errors.
 Project headers live in `src/headers/`, with implementations in `src/`.
 
-<img src="../../.github/docs/svg/architecture.svg" alt="Project Structure Flowchart" width="750">
+<img src="https://raw.githubusercontent.com/ThatAnimeGuyGith/OpenGLRenderer/main/.github/docs/svg/architecture.svg" alt="OpenGLRenderer startup, render loop, and shutdown flow" width="750">
 
 ## Startup sequence
 
