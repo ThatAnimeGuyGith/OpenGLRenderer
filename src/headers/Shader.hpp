@@ -12,4 +12,6 @@ GLuint createShaderProgram(
     const std::filesystem::path& vertexPath,
     const std::filesystem::path& fragmentPath);
 
+void deleteShaderProgram(GLuint program);
+
 void setUniformMatrix4(GLuint program, const char* name, const float* value);

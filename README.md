@@ -1,10 +1,6 @@
 # OpenGL Renderer
 
-A small, OpenGL 3.3 renderer written in C++20.
-
-I'm learning as I build it, with the long-term goal of turning it into a renderer for a game.
-
-Currently loads OBJ meshes, applies fixed diffuse lighting, and reads window size, title, VSync, and wireframe settings from JSON.
+A small C++20 renderer for OpenGL 3.3. It opens a window, loads the included cube from an OBJ mesh, rotates it with fixed diffuse lighting, and reads window settings from JSON. The project is in early development and is also a learning project.
 
 <img src=".github/docs/images/renderer.png" alt="Renderer screenshot" width="500">
 
@@ -25,6 +21,7 @@ Currently loads OBJ meshes, applies fixed diffuse lighting, and reads window siz
   - [Presets](#presets)
   - [VS Code](#vs-code)
   - [Making a release](#making-a-release)
+- [Testing](#testing)
 - [GitHub automation](#github-automation)
 - [GitHub wiki](#github-wiki)
 - [Running](#running)
@@ -36,6 +33,8 @@ Currently loads OBJ meshes, applies fixed diffuse lighting, and reads window siz
 ## Building
 
 You need a C++20 compiler with `<format>` support, CMake 3.24 or newer, Ninja, and Git. On GCC that means version 13 or newer. Ubuntu 22.04 and Debian 12 ship older compilers by default, so use Ubuntu 24.04 or newer, or install a newer GCC.
+
+Running the renderer also requires a desktop session and graphics driver with OpenGL 3.3 support. The settings tests do not need a display or GPU.
 
 CMake manages GLFW, nlohmann/json, and tinyobjloader. On Linux, it uses system-installed GLFW and nlohmann/json when available; otherwise, it downloads and builds them.
 
@@ -143,9 +142,20 @@ This creates a ready-to-run program folder and a ZIP archive under the generated
 
 The version number comes from `project(... VERSION ...)` in [`CMakeLists.txt`](CMakeLists.txt). Change it there to update the project version used for packaging.
 
+## Testing
+
+Build the project with one of the presets above, then run CTest from the corresponding build directory:
+
+```bash
+ctest --test-dir build/debug --output-on-failure
+ctest --test-dir build/release --output-on-failure
+```
+
+The current tests cover settings and JSON validation. They use temporary files and do not initialize GLFW or OpenGL.
+
 ## GitHub automation
 
-The [`Build`](.github/workflows/build.yml) workflow configures and builds both Debug and Release presets on Ubuntu, macOS, and Windows for pull requests targeting `main`, pushes to `main`, and manual runs. Feature-branch builds run through their pull request instead of on every branch push. It uploads only the Release executable and shipped assets for each platform on `main` pushes and manual runs; pull request builds do not create artifacts. Artifacts are retained for seven days.
+The [`Build`](.github/workflows/build.yml) workflow configures, builds, and tests Debug and Release on Ubuntu, macOS, and Windows for pull requests targeting `main`, pushes to `main`, and manual runs. Release jobs also build and verify the package. On `main` pushes and manual runs, the workflow uploads the Release executable and assets plus a separate package archive for each operating system. Pull request builds do not upload artifacts. Artifacts are retained for seven days.
 
 ## GitHub wiki
 
@@ -177,7 +187,7 @@ On first launch, the default settings template at [`assets/config/settings.json`
 
 Window size, title, wireframe mode, and VSync are configured there. Delete the user settings file to recreate it from the shipped default template.
 
-Missing settings keys keep their built-in defaults and produce a `WARN` log entry. Invalid values produce a configuration error and a nonzero exit code. On Windows, Debug writes logs to its console; Release has no console window and writes startup output to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log`.
+Missing keys keep their built-in defaults and produce a `WARN` log entry. A missing `window` section keeps all defaults without warnings; a present `window` value must be an object. Width and height must be JSON integers from 1 through 16384. Wrong value types, malformed JSON, and out-of-range dimensions produce a configuration error and exit code 2. If the settings file cannot be opened, startup reports a configuration error rather than silently replacing it with defaults. On Windows, Debug writes logs to its console; Release has no console window and writes startup output to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log`.
 
 > [!TIP]
 > Press `Esc` to quit.

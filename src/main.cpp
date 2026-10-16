@@ -132,7 +132,7 @@ int main()
 
         glfwSetWindowRefreshCallback(window, nullptr);
         glfwSetWindowUserPointer(window, nullptr);
-        glDeleteProgram(shaderProgram);
+        deleteShaderProgram(shaderProgram);
 
         // The window is deliberately not destroyed here. Destroying it also
         // destroys its OpenGL context, and `cube` still has to delete its

@@ -10,6 +10,7 @@
 | `assets/shaders/` | GLSL vertex and fragment shaders |
 | `third_party/glad/` | Committed GLAD loader source and headers |
 | `cmake/` | Release packaging helper scripts |
+| `tests/` | Context-free settings tests |
 | `docs/wiki/` | Source Markdown published to the GitHub wiki |
 | `.github/workflows/` | Build and wiki-publishing workflows |
 | `build/` | Generated CMake build trees and executables; not source files |
@@ -17,14 +18,29 @@
 
 ## Source responsibilities
 
-- `main.cpp` coordinates the application lifetime: read settings, create the OpenGL context, construct the shader and mesh, render frames, and release GL resources before the context is destroyed.
-- `headers/Settings.hpp` defines settings and the loader interface; `Settings.cpp` parses JSON and validates the values used by the window.
-- `headers/Paths.hpp` and `Paths.cpp` locate the executable, shipped assets, and writable user-data directory.
-- `headers/Window.hpp` and `Window.cpp` own GLFW initialization, window creation, GLAD initialization, callbacks, and keyboard input.
-- `headers/Shader.hpp` and `Shader.cpp` read GLSL files, compile shaders, link the program, and set matrix uniforms.
-- `headers/ObjMesh.hpp` and `ObjMesh.cpp` load OBJ geometry and upload vertex data to OpenGL buffers.
-- `headers/Log.hpp` and `Log.cpp` provide the shared diagnostic output path; `headers/Error.hpp` and `Error.cpp` define categorized renderer errors and exit codes.
+- **Application entry point:** [`src/main.cpp`](https://github.com/ThatAnimeGuyGith/OpenGLRenderer/blob/main/src/main.cpp).
+	It reads settings, creates the OpenGL context, and constructs the shader and mesh.
+	It runs the render loop and releases GL resources before context shutdown.
+- **Settings:** `src/headers/Settings.hpp` defines the settings and loader interface; `src/Settings.cpp` parses JSON and validates window values.
+- **Paths:** `src/headers/Paths.hpp` and `src/Paths.cpp` locate the executable, shipped assets, and writable user-data directory.
+- **Window:** `src/headers/Window.hpp` and `src/Window.cpp` manage GLFW initialization and window/context creation.
+	They also initialize GLAD and handle callbacks and keyboard input.
+- **Shaders:** `src/headers/Shader.hpp` and `src/Shader.cpp` load GLSL files, compile shaders, link the program, and set uniforms.
+- **Mesh:** `src/headers/ObjMesh.hpp` and `src/ObjMesh.cpp` load OBJ geometry and upload vertex data to OpenGL buffers.
+- **Diagnostics:** `src/headers/Log.hpp` and `src/Log.cpp` provide shared output.
+	`src/headers/Error.hpp` and `src/Error.cpp` define categorized errors and exit codes.
 
-The renderer target's private include directory is `src/headers`, so application files use includes such as `#include "Settings.hpp"`. `CMakeLists.txt` lists the implementation and header files explicitly. When adding a new implementation, add its `.cpp` and header to the target list; put project-owned headers in `src/headers/`.
+The renderer target uses `src/headers/` as a private include directory.
+Application files can include a project header with a short include such as `#include "Settings.hpp"`.
+When adding an implementation, list its `.cpp` and header in `CMakeLists.txt`.
 
-The GitHub Actions build workflow configures and compiles both Debug and Release presets on Ubuntu, macOS, and Windows. It uploads only the Release executable and assets as a short-lived workflow artifact for each platform.
+## Build and release files
+
+The `debug` and `release` CMake presets write to `build/debug/` and `build/release/`.
+The `package_release` target writes a ready-to-run folder and platform ZIP under `release/<version>_<date>/`.
+See the [Build workflow](https://github.com/ThatAnimeGuyGith/OpenGLRenderer/blob/main/.github/workflows/build.yml).
+It runs tests in both configurations on Ubuntu, macOS, and Windows.
+Release jobs also create and verify a package.
+On pushes to `main` and manual runs, CI uploads the executable/assets and package as separate artifacts for each operating system.
+
+[[Home|Back to wiki home]] · [[Architecture|Read the architecture guide]] · [[Build-and-run|Build and run]]
