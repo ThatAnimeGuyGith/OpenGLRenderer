@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+
 # Run by the package_release target. Not meant to be called by hand.
 # Builds release/<version>_<date>/ containing the program folder and a zip.
 
