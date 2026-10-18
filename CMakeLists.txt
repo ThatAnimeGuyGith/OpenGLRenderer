@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 # The version lives here and nowhere else. The release script reads it.
-project(OpenGLRenderer VERSION 0.2.5 LANGUAGES C CXX)
+project(OpenGLRenderer VERSION 0.3.0 LANGUAGES C CXX)
 
 # <format> arrived in GCC 13. Fail here, with a clear
 # message, instead of deep inside the compiler with "format: No such file".
@@ -53,7 +53,12 @@ FetchContent_Declare(tinyobjloader
     GIT_TAG        v2.0.0rc13
     GIT_SHALLOW    TRUE
 )
-FetchContent_MakeAvailable(glfw nlohmann_json tinyobjloader)
+FetchContent_Declare(imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG        v1.93.0
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(glfw nlohmann_json tinyobjloader imgui)
 
 include(CTest)
 
@@ -72,13 +77,19 @@ endif()
 add_library(renderer_core STATIC
     src/Error.cpp
     src/Log.cpp
+    src/ModelList.cpp
+    src/ObjMeshData.cpp
     src/ObjPaths.cpp
     src/Paths.cpp
+    src/Rotation.cpp
     src/Settings.cpp
     src/headers/Error.hpp
     src/headers/Log.hpp
+    src/headers/ModelList.hpp
+    src/headers/ObjMeshData.hpp
     src/headers/ObjPaths.hpp
     src/headers/Paths.hpp
+    src/headers/Rotation.hpp
     src/headers/Settings.hpp
 )
 target_include_directories(renderer_core PUBLIC src/headers)
@@ -86,6 +97,18 @@ target_link_libraries(renderer_core PUBLIC
     nlohmann_json::nlohmann_json
     renderer_warnings
 )
+
+add_library(imgui STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+target_compile_definitions(imgui PRIVATE IMGUI_IMPL_OPENGL_LOADER_GLAD)
+target_link_libraries(imgui PUBLIC glfw glad renderer_warnings)
 
 # ---------------------------------------------------------------------------
 # The program
@@ -95,9 +118,11 @@ target_link_libraries(renderer_core PUBLIC
 add_executable(OpenGLRenderer
     src/main.cpp
     src/ObjMesh.cpp
+    src/RendererUi.cpp
     src/Shader.cpp
     src/Window.cpp
     src/headers/ObjMesh.hpp
+    src/headers/RendererUi.hpp
     src/headers/Shader.hpp
     src/headers/Window.hpp
 )
@@ -111,6 +136,7 @@ target_include_directories(OpenGLRenderer PRIVATE src/headers)
 target_link_libraries(OpenGLRenderer PRIVATE
     renderer_core
     renderer_warnings
+    imgui
     glad
     glfw
     nlohmann_json::nlohmann_json
@@ -137,6 +163,10 @@ if(BUILD_TESTING)
     add_executable(obj_path_tests tests/ObjPathTests.cpp)
     target_link_libraries(obj_path_tests PRIVATE renderer_core renderer_warnings)
     add_test(NAME obj_path COMMAND obj_path_tests)
+
+    add_executable(renderer_core_tests tests/RendererCoreTests.cpp)
+    target_link_libraries(renderer_core_tests PRIVATE renderer_core renderer_warnings)
+    add_test(NAME renderer_core COMMAND renderer_core_tests)
 endif()
 
 # ---------------------------------------------------------------------------
