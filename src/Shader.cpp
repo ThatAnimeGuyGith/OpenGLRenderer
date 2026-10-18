@@ -70,7 +70,7 @@ GLuint compileShader(GLenum type, const std::string& source, const std::string& 
     return shader;
 }
 
-GLuint createShaderProgram(
+ShaderProgram::ShaderProgram(
     const std::filesystem::path& vertexPath,
     const std::filesystem::path& fragmentPath)
 {
@@ -89,47 +89,85 @@ GLuint createShaderProgram(
         throw;
     }
 
-    const GLuint program = glCreateProgram();
-    uniformLocationCache.erase(program);
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
+    program_ = glCreateProgram();
+    uniformLocationCache.erase(program_);
+    glAttachShader(program_, vertexShader);
+    glAttachShader(program_, fragmentShader);
+    glLinkProgram(program_);
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     GLint success = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    glGetProgramiv(program_, GL_LINK_STATUS, &success);
     if (!success) {
         GLint logLength = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+        glGetProgramiv(program_, GL_INFO_LOG_LENGTH, &logLength);
 
         std::string infoLog;
         if (logLength > 0) {
             std::vector<char> buffer(static_cast<size_t>(logLength));
-            glGetProgramInfoLog(program, logLength, nullptr, buffer.data());
+            glGetProgramInfoLog(program_, logLength, nullptr, buffer.data());
             infoLog.assign(buffer.data());
         }
 
-        glDeleteProgram(program);
+        glDeleteProgram(program_);
+        program_ = 0;
         throw RendererError(
             ErrorCategory::Shader,
             "Failed to link shader program:\n" + infoLog);
     }
 
     Log::info("Linked shader program");
-    return program;
 }
 
-void deleteShaderProgram(GLuint program)
+ShaderProgram::~ShaderProgram()
 {
-    uniformLocationCache.erase(program);
-    glDeleteProgram(program);
+    if (program_ != 0) {
+        uniformLocationCache.erase(program_);
+        glDeleteProgram(program_);
+    }
 }
 
-void setUniformMatrix4(GLuint program, const char* name, const float* value)
+ShaderProgram::ShaderProgram(ShaderProgram&& other) noexcept
+    : program_(std::exchange(other.program_, 0))
 {
-    const GLint location = uniformLocation(program, name);
+}
+
+ShaderProgram& ShaderProgram::operator=(ShaderProgram&& other) noexcept
+{
+    if (this != &other) {
+        if (program_ != 0) {
+            uniformLocationCache.erase(program_);
+            glDeleteProgram(program_);
+        }
+        program_ = std::exchange(other.program_, 0);
+    }
+    return *this;
+}
+
+void ShaderProgram::use() const
+{
+    glUseProgram(program_);
+}
+
+void ShaderProgram::setMatrix4(const char* name, const float* value) const
+{
+    const GLint location = uniformLocation(program_, name);
     if (location >= 0)
         glUniformMatrix4fv(location, 1, GL_FALSE, value);
+}
+
+void ShaderProgram::setFloat(const char* name, float value) const
+{
+    const GLint location = uniformLocation(program_, name);
+    if (location >= 0)
+        glUniform1f(location, value);
+}
+
+void ShaderProgram::setVec3(const char* name, const float* value) const
+{
+    const GLint location = uniformLocation(program_, name);
+    if (location >= 0)
+        glUniform3fv(location, 1, value);
 }

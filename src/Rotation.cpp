@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 
 void advanceRotation(RotationState& state, float deltaSeconds)
 {
