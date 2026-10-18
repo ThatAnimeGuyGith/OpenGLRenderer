@@ -24,7 +24,12 @@
         {
             "label": "OpenGL Renderer: run Debug",
             "type": "process",
-            "command": "${command:cmake.launchTargetPath}",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "& \"${command:cmake.launchTargetPath}\""
+            ],
             "dependsOn": "CMake: build Debug",
             "dependsOrder": "sequence",
             "group": "test",

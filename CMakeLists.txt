@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 # The version lives here and nowhere else. The release script reads it.
-project(OpenGLRenderer VERSION 0.3.0 LANGUAGES C CXX)
+project(OpenGLRenderer VERSION 0.3.1 LANGUAGES C CXX)
 
 # <format> arrived in GCC 13. Fail here, with a clear
 # message, instead of deep inside the compiler with "format: No such file".

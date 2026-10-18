@@ -4,15 +4,17 @@ This roadmap is a planning guide, not a delivery schedule. Versions show the int
 
 ## Current work
 
-### v0.2.5
-
-This patch release fixes OBJ material-library path resolution for OBJ filenames without a parent directory. It makes fatal Windows Release startup failures visible if file logging cannot start, documents the macOS application-data location, and adds this roadmap.
-
-## Planned features
-
 ### v0.3.0
 
-Add a Dear ImGui interface, model selection, rotation control, and shader property controls. This creates the user controls that later scene and shader work will use.
+Implemented Dear ImGui controls for model selection, rotation, and shader properties. The release also adds the supporting GL-free state and mesh-processing tests.
+
+## Completed releases
+
+### v0.2.5
+
+Fixed OBJ material-library path resolution for OBJ filenames without a parent directory. Added a Windows fallback for fatal startup errors when file logging cannot start, documented the macOS application-data location, and added this roadmap.
+
+## Planned features
 
 ### v0.4.0
 

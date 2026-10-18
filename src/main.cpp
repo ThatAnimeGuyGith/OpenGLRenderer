@@ -3,14 +3,19 @@
 
 #include "Error.hpp"
 #include "Log.hpp"
+#include "ModelList.hpp"
 #include "ObjMesh.hpp"
 #include "Paths.hpp"
+#include "RendererUi.hpp"
+#include "Rotation.hpp"
 #include "Settings.hpp"
 #include "Shader.hpp"
 #include "Window.hpp"
 
 #include <cmath>
 #include <cstdio>
+#include <memory>
+#include <string>
 #include <system_error>
 
 #if defined(_WIN32) && defined(NDEBUG)
@@ -22,11 +27,13 @@
 
 namespace {
 struct RenderState {
-    GLuint shaderProgram;
+    const ShaderProgram* shaderProgram;
     const ObjMesh* mesh;
+    const RotationState* rotation;
+    const LightingSettings* lighting;
 };
 
-void drawFrame(GLFWwindow* window, const RenderState& state)
+void drawScene(GLFWwindow* window, const RenderState& state)
 {
     int framebufferWidth = 0;
     int framebufferHeight = 0;
@@ -53,9 +60,8 @@ void drawFrame(GLFWwindow* window, const RenderState& state)
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, -9.0f, 1.0f
     };
-    const float rotation = static_cast<float>(glfwGetTime()) * 0.35f;
-    const float cosine = std::cos(rotation);
-    const float sine = std::sin(rotation);
+    const float cosine = std::cos(state.rotation->angleRadians);
+    const float sine = std::sin(state.rotation->angleRadians);
     const float model[] = {
         cosine, 0.0f, -sine, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -63,19 +69,24 @@ void drawFrame(GLFWwindow* window, const RenderState& state)
         0.0f, 0.0f, 0.0f, 1.0f
     };
 
-    glUseProgram(state.shaderProgram);
-    setUniformMatrix4(state.shaderProgram, "model", model);
-    setUniformMatrix4(state.shaderProgram, "view", view);
-    setUniformMatrix4(state.shaderProgram, "projection", projection);
+    state.shaderProgram->use();
+    state.shaderProgram->setMatrix4("model", model);
+    state.shaderProgram->setMatrix4("view", view);
+    state.shaderProgram->setMatrix4("projection", projection);
+    state.shaderProgram->setVec3("baseColor", state.lighting->baseColor);
+    state.shaderProgram->setVec3("lightDirection", state.lighting->lightDirection);
+    state.shaderProgram->setFloat("ambientStrength", state.lighting->ambientStrength);
+    state.shaderProgram->setFloat("diffuseStrength", state.lighting->diffuseStrength);
     state.mesh->draw();
-    glfwSwapBuffers(window);
 }
 
 void redrawWindow(GLFWwindow* window)
 {
     const auto* state = static_cast<const RenderState*>(glfwGetWindowUserPointer(window));
-    if (state != nullptr)
-        drawFrame(window, *state);
+    if (state != nullptr) {
+        drawScene(window, *state);
+        glfwSwapBuffers(window);
+    }
 }
 
 #if defined(_WIN32) && defined(NDEBUG)
@@ -128,29 +139,54 @@ int main()
             reinterpret_cast<const char*>(glGetString(GL_VERSION)));
         Log::info("OpenGL Renderer {}", OPENGLRENDERER_VERSION);
 
-        const GLuint shaderProgram = createShaderProgram(
+        ShaderProgram shaderProgram(
             assetPath("shaders/vertexShader.vert"),
             assetPath("shaders/fragmentShader.frag"));
 
-        ObjMesh cube(assetPath("meshes/cube/cube.obj"));
+        int selectedModel = 0;
+        std::unique_ptr<ObjMesh> mesh = std::make_unique<ObjMesh>(
+            assetPath(builtInModels()[static_cast<std::size_t>(selectedModel)].assetPath));
+        RotationState rotation;
+        LightingSettings lighting;
+        RendererUi ui(window, userDataDir() / "imgui.ini");
         glEnable(GL_DEPTH_TEST);
 
-        RenderState renderState{shaderProgram, &cube};
+        RenderState renderState{&shaderProgram, mesh.get(), &rotation, &lighting};
         glfwSetWindowUserPointer(window, &renderState);
         glfwSetWindowRefreshCallback(window, redrawWindow);
 
+        float previousTime = static_cast<float>(glfwGetTime());
+        std::string modelLoadError;
         while (!glfwWindowShouldClose(window)) {
+            const float currentTime = static_cast<float>(glfwGetTime());
+            advanceRotation(rotation, currentTime - previousTime);
+            previousTime = currentTime;
             processInput(window);
-            drawFrame(window, renderState);
+            drawScene(window, renderState);
+            ui.beginFrame();
+            const int previousModel = selectedModel;
+            if (ui.draw(selectedModel, rotation, lighting, modelLoadError)) {
+                try {
+                    const auto& model = builtInModels()[static_cast<std::size_t>(selectedModel)];
+                    std::unique_ptr<ObjMesh> replacement = std::make_unique<ObjMesh>(assetPath(model.assetPath));
+                    mesh = std::move(replacement);
+                    renderState.mesh = mesh.get();
+                    modelLoadError.clear();
+                } catch (const std::exception& error) {
+                    modelLoadError = error.what();
+                    Log::error(modelLoadError);
+                    selectedModel = previousModel;
+                }
+            }
+            ui.render();
+            glfwSwapBuffers(window);
             glfwPollEvents();
         }
 
         glfwSetWindowRefreshCallback(window, nullptr);
         glfwSetWindowUserPointer(window, nullptr);
-        deleteShaderProgram(shaderProgram);
-
         // The window is deliberately not destroyed here. Destroying it also
-        // destroys its OpenGL context, and `cube` still has to delete its
+        // destroys its OpenGL context, and `mesh` still has to delete its
         // buffers when it goes out of scope after this return. `glfw` is
         // declared first, so it is destroyed last, and glfwTerminate()
         // closes the window once every GL object is gone.

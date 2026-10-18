@@ -22,7 +22,7 @@ Project headers live in `src/headers/`, with implementations in `src/`.
 4. `createOpenGLWindow()` creates a window and makes its context current.
 	It applies VSync, initializes GLAD, and configures the framebuffer callback and viewport.
 
-5. `createShaderProgram()` reads both GLSL files, compiles the shaders, links the program, and releases the temporary shader objects.
+5. `ShaderProgram` reads both GLSL files, compiles them, links them, and owns the resulting OpenGL program until the context is shut down.
 
 6. `ObjMesh` loads the OBJ file with tinyobjloader, prepares triangle vertices and normals, and uploads them to a VAO and VBO.
 	The render state refers to the shader program and mesh.
@@ -32,7 +32,7 @@ Project headers live in `src/headers/`, with implementations in `src/`.
 
 ## Frame rendering
 
-`drawFrame()` queries the framebuffer dimensions and skips rendering if either dimension is zero, such as while minimized.
+`drawScene()` queries the framebuffer dimensions and skips rendering if either dimension is zero, such as while minimized. The main loop draws the ImGui control panel after the scene and before swapping buffers.
 
 It clears the color and depth buffers, then builds the model, view, and perspective projection matrices.
 It sets the shader uniforms, draws the mesh, and swaps buffers.
