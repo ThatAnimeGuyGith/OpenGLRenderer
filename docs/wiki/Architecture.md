@@ -6,11 +6,11 @@ The renderer is a small single-window application.
 Other modules handle settings, paths, the OpenGL window, shaders, mesh data, diagnostics, and errors.
 Project headers live in `src/headers/`, with implementations in `src/`.
 
-<img src="https://raw.githubusercontent.com/ThatAnimeGuyGith/OpenGLRenderer/main/.github/docs/svg/architecture.svg" alt="OpenGLRenderer startup, render loop, and shutdown flow" width="750">
+<img src="https://raw.githubusercontent.com/ThatAnimeGuyGith/OpenGLRenderer/main/docs/assets/svg/architecture.svg" alt="OpenGLRenderer startup, render loop, and shutdown flow" width="750">
 
 ## Startup sequence
 
-1. On Windows Release, `main()` tries to redirect standard output and error to `openglrenderer.log` in the user-data directory.
+1. On Windows Release, `main()` tries to redirect standard output and error to `openglrenderer.log` in the user-data directory. If that fails, fatal startup errors use a Windows error dialog.
 	Debug and non-Windows builds keep their usual output destinations.
 
 2. `userSettingsPath()` creates the user-data directory and copies the shipped settings template on first launch.
@@ -22,7 +22,7 @@ Project headers live in `src/headers/`, with implementations in `src/`.
 4. `createOpenGLWindow()` creates a window and makes its context current.
 	It applies VSync, initializes GLAD, and configures the framebuffer callback and viewport.
 
-5. `createShaderProgram()` reads both GLSL files, compiles the shaders, links the program, and releases the temporary shader objects.
+5. `ShaderProgram` reads both GLSL files, compiles them, links them, and owns the resulting OpenGL program until the context is shut down.
 
 6. `ObjMesh` loads the OBJ file with tinyobjloader, prepares triangle vertices and normals, and uploads them to a VAO and VBO.
 	The render state refers to the shader program and mesh.
@@ -32,7 +32,7 @@ Project headers live in `src/headers/`, with implementations in `src/`.
 
 ## Frame rendering
 
-`drawFrame()` queries the framebuffer dimensions and skips rendering if either dimension is zero, such as while minimized.
+`drawScene()` queries the framebuffer dimensions and skips rendering if either dimension is zero, such as while minimized. The main loop draws the ImGui control panel after the scene and before swapping buffers.
 
 It clears the color and depth buffers, then builds the model, view, and perspective projection matrices.
 It sets the shader uniforms, draws the mesh, and swaps buffers.

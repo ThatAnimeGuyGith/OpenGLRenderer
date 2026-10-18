@@ -1,12 +1,12 @@
 # OpenGL Renderer
 
-A small C++20 renderer for OpenGL 3.3. It opens a window, loads the included cube from an OBJ mesh, rotates it with fixed diffuse lighting, and reads window settings from JSON. The project is in early development and is also a learning project.
+A small C++20 renderer for OpenGL 3.3. It opens a window, displays bundled OBJ models, provides a Dear ImGui control panel, and reads window settings from JSON. The project is in early development and is also a learning project.
 
-<img src=".github/docs/images/renderer.png" alt="Renderer screenshot" width="500">
+<img src="/docs/assets/images/renderer.png" alt="Renderer screenshot" width="500">
 
 ---
 
-**Status:** Early development (`v0.2.4`).
+**Status:** Early development. See the [release history](https://github.com/ThatAnimeGuyGith/OpenGLRenderer/releases) for published versions.
 
 > [!WARNING]
 > The code changes frequently, and APIs and features may not be stable yet.
@@ -21,6 +21,7 @@ A small C++20 renderer for OpenGL 3.3. It opens a window, loads the included cub
   - [Presets](#presets)
   - [VS Code](#vs-code)
   - [Making a release](#making-a-release)
+  - [Roadmap](#roadmap)
 - [Testing](#testing)
 - [GitHub automation](#github-automation)
 - [GitHub wiki](#github-wiki)
@@ -36,7 +37,7 @@ You need a C++20 compiler with `<format>` support, CMake 3.24 or newer, Ninja, a
 
 Running the renderer also requires a desktop session and graphics driver with OpenGL 3.3 support. The settings tests do not need a display or GPU.
 
-CMake manages GLFW, nlohmann/json, and tinyobjloader. On Linux, it uses system-installed GLFW and nlohmann/json when available; otherwise, it downloads and builds them.
+CMake manages GLFW, nlohmann/json, tinyobjloader, and Dear ImGui. On Linux, it uses system-installed GLFW and nlohmann/json when available; otherwise, it downloads and builds them. Dear ImGui is pinned to `v1.93.0`.
 
 > [!NOTE]
 > An internet connection may be required when configuring a fresh build.
@@ -187,7 +188,13 @@ On first launch, the default settings template at [`assets/config/settings.json`
 
 Window size, title, wireframe mode, and VSync are configured there. Delete the user settings file to recreate it from the shipped default template.
 
-Missing keys keep their built-in defaults and produce a `WARN` log entry. A missing `window` section keeps all defaults without warnings; a present `window` value must be an object. Width and height must be JSON integers from 1 through 16384. Wrong value types, malformed JSON, and out-of-range dimensions produce a configuration error and exit code 2. If the settings file cannot be opened, startup reports a configuration error rather than silently replacing it with defaults. On Windows, Debug writes logs to its console; Release has no console window and writes startup output to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log`.
+The control panel selects the Cube or Pyramid demo model, pauses rotation, changes rotation speed, and edits base color, light direction, ambient strength, and diffuse strength. Use **Reset lighting** to restore the shader-property defaults. Dear ImGui stores its panel layout in the user-data directory as `imgui.ini`, never in the working directory.
+
+Missing keys keep their built-in defaults and produce a `WARN` log entry. A missing `window` section keeps all defaults without warnings; a present `window` value must be an object. Width and height must be JSON integers from 1 through 16384. Wrong value types, malformed JSON, and out-of-range dimensions produce a configuration error and exit code 2. If the settings file cannot be opened, startup reports a configuration error rather than silently replacing it with defaults. On Windows, Debug writes logs to its console; Release writes startup output to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log` when it can create that location. If it cannot, fatal startup failures appear in a Windows error dialog. User settings are stored in `%LOCALAPPDATA%\OpenGLRenderer`, `$XDG_DATA_HOME/openglrenderer` or `~/.local/share/openglrenderer` on Linux, and `~/Library/Application Support/OpenGLRenderer` on macOS.
+
+## Roadmap
+
+The planned work and exploratory research are in [the roadmap](docs/ROADMAP.md).
 
 > [!TIP]
 > Press `Esc` to quit.
@@ -222,12 +229,10 @@ The [`LICENSE`](LICENSE) file contains the full license terms. This summary is p
 
 ## Contributing
 
-Issues and pull requests are welcome.
+Before submitting a change, **you must read** the contribution terms in the [CONTRIBUTING file](CONTRIBUTING.md).
+It describes the rights associated with contributions to this project.
 
-By submitting a contribution, you confirm that you wrote it or have the right to submit it.
-You agree to license the contribution under the same terms as the project and grant the project owner the right to use it in commercial releases of this project or of games built from it.
-
-**If you are not comfortable with these terms, please open an issue to discuss them before submitting a contribution.**
+By submitting a contribution, you confirm that you have read [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Third-party software
 
@@ -237,8 +242,10 @@ You agree to license the contribution under the same terms as the project and gr
 | [glad](https://github.com/Dav1dde/glad) 0.1.36 | OpenGL function loader | MIT / public domain |
 | [nlohmann/json](https://github.com/nlohmann/json) 3.12.0 | JSON parsing | MIT |
 | [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) 2.0.0rc13 | Wavefront OBJ loading | MIT |
+| [Dear ImGui](https://github.com/ocornut/imgui) 1.93.0 | Control panel UI | MIT |
 
 The full license texts are in [`THIRD_PARTY_LICENSES.txt`](THIRD_PARTY_LICENSES.txt), which is also included in release packages. Update it when you change a pinned version.
 
 The cube demo mesh was created by Morgan McGuire and released into the public domain.
 Its source and attribution are documented in [`assets/meshes/cube/cube.obj`](assets/meshes/cube/cube.obj).
+The pyramid demo mesh was created for this project and is public domain.

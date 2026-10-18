@@ -1,6 +1,11 @@
 # Contributing
 
-Before submitting a change, read the contribution terms in the [README](README.md#contributing). They describe the rights associated with contributions to this project.
+Issues and pull requests are welcome.
+
+By submitting a contribution, you confirm that you wrote it or have the right to submit it.
+You agree to license the contribution under the same terms as the project and grant the project owner the right to use it in commercial releases of this project or of games built from it.
+
+**If you are not comfortable with these terms, please open an issue to discuss them before submitting a contribution.**
 
 ## Tools
 

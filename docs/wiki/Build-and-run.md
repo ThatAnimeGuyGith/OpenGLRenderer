@@ -49,7 +49,7 @@ The ready-to-run folder and platform ZIP are written to `release/<version>_<date
 The packaging target checks that required files are present and that build or test files are not included.
 
 On Windows, Release uses the GUI subsystem and does not open a console window.
-At startup, it redirects standard output and error to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log`.
+At startup, it redirects standard output and error to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log` when possible. If setup fails, fatal startup errors appear in a Windows error dialog.
 Linux and macOS keep their normal terminal output.
 
 ## Continuous integration

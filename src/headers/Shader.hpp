@@ -8,10 +8,23 @@ std::string loadShaderSource(const std::filesystem::path& path);
 
 GLuint compileShader(GLenum type, const std::string& source, const std::string& name);
 
-GLuint createShaderProgram(
-    const std::filesystem::path& vertexPath,
-    const std::filesystem::path& fragmentPath);
+class ShaderProgram {
+public:
+    ShaderProgram(
+        const std::filesystem::path& vertexPath,
+        const std::filesystem::path& fragmentPath);
+    ~ShaderProgram();
 
-void deleteShaderProgram(GLuint program);
+    ShaderProgram(const ShaderProgram&) = delete;
+    ShaderProgram& operator=(const ShaderProgram&) = delete;
+    ShaderProgram(ShaderProgram&& other) noexcept;
+    ShaderProgram& operator=(ShaderProgram&& other) noexcept;
 
-void setUniformMatrix4(GLuint program, const char* name, const float* value);
+    void use() const;
+    void setMatrix4(const char* name, const float* value) const;
+    void setFloat(const char* name, float value) const;
+    void setVec3(const char* name, const float* value) const;
+
+private:
+    GLuint program_ = 0;
+};
