@@ -14,7 +14,8 @@ It does not overwrite that file on later launches.
 | Platform | Settings path |
 | --- | --- |
 | Windows | `%LOCALAPPDATA%\OpenGLRenderer\settings.json` |
-| Linux and macOS | `$XDG_DATA_HOME/openglrenderer/settings.json`, or `~/.local/share/openglrenderer/settings.json` when `XDG_DATA_HOME` is unset |
+| Linux | `$XDG_DATA_HOME/openglrenderer/settings.json`, or `~/.local/share/openglrenderer/settings.json` when `XDG_DATA_HOME` is unset |
+| macOS | `~/Library/Application Support/OpenGLRenderer/settings.json` |
 
 The JSON object contains a `window` object with these settings:
 
@@ -40,6 +41,7 @@ A floating-point value is not accepted as a window dimension, even when its nume
 
 On Windows, Debug writes diagnostics to its console.
 Release has no console window and redirects stdout and stderr to `%LOCALAPPDATA%\OpenGLRenderer\openglrenderer.log`, replacing the log at each launch.
+If that setup fails, the renderer continues when it can and shows fatal startup failures in a Windows error dialog.
 Linux and macOS keep their normal terminal output.
 
 ## Asset loading

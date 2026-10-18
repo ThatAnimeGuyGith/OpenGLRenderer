@@ -2,6 +2,7 @@
 
 #include "Error.hpp"
 #include "Log.hpp"
+#include "ObjPaths.hpp"
 
 #include <tiny_obj_loader.h>
 
@@ -49,7 +50,7 @@ ObjMesh::ObjMesh(const std::filesystem::path& path)
     std::string warning;
     std::string error;
     const std::string pathString = path.string();
-    const std::string basePath = path.parent_path().generic_string() + "/";
+    const std::string basePath = objMaterialBasePath(path).generic_string() + "/";
     if (!tinyobj::LoadObj(&attributes, &shapes, &materials, &warning, &error, pathString.c_str(), basePath.c_str(), true))
         throw RendererError(ErrorCategory::Io, "Failed to load OBJ mesh '" + pathString + "': " + error);
     if (!warning.empty())

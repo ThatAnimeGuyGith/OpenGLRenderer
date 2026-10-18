@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 # The version lives here and nowhere else. The release script reads it.
-project(OpenGLRenderer VERSION 0.2.4 LANGUAGES C CXX)
+project(OpenGLRenderer VERSION 0.2.5 LANGUAGES C CXX)
 
 # <format> arrived in GCC 13. Fail here, with a clear
 # message, instead of deep inside the compiler with "format: No such file".
@@ -62,6 +62,31 @@ add_library(glad STATIC third_party/glad/src/glad.c)
 target_include_directories(glad PUBLIC third_party/glad/include)
 target_link_libraries(glad PUBLIC ${CMAKE_DL_LIBS})   # glad uses dlopen on Linux
 
+add_library(renderer_warnings INTERFACE)
+if(MSVC)
+    target_compile_options(renderer_warnings INTERFACE /W4)
+else()
+    target_compile_options(renderer_warnings INTERFACE -Wall -Wextra -Wpedantic)
+endif()
+
+add_library(renderer_core STATIC
+    src/Error.cpp
+    src/Log.cpp
+    src/ObjPaths.cpp
+    src/Paths.cpp
+    src/Settings.cpp
+    src/headers/Error.hpp
+    src/headers/Log.hpp
+    src/headers/ObjPaths.hpp
+    src/headers/Paths.hpp
+    src/headers/Settings.hpp
+)
+target_include_directories(renderer_core PUBLIC src/headers)
+target_link_libraries(renderer_core PUBLIC
+    nlohmann_json::nlohmann_json
+    renderer_warnings
+)
+
 # ---------------------------------------------------------------------------
 # The program
 # ---------------------------------------------------------------------------
@@ -69,18 +94,10 @@ target_link_libraries(glad PUBLIC ${CMAKE_DL_LIBS})   # glad uses dlopen on Linu
 # reconfigure, and it makes "what is in this build?" harder to answer.
 add_executable(OpenGLRenderer
     src/main.cpp
-    src/Error.cpp
-    src/Log.cpp
-    src/Paths.cpp
     src/ObjMesh.cpp
-    src/Settings.cpp
     src/Shader.cpp
     src/Window.cpp
-    src/headers/Error.hpp
-    src/headers/Log.hpp
     src/headers/ObjMesh.hpp
-    src/headers/Paths.hpp
-    src/headers/Settings.hpp
     src/headers/Shader.hpp
     src/headers/Window.hpp
 )
@@ -92,6 +109,8 @@ endif()
 
 target_include_directories(OpenGLRenderer PRIVATE src/headers)
 target_link_libraries(OpenGLRenderer PRIVATE
+    renderer_core
+    renderer_warnings
     glad
     glfw
     nlohmann_json::nlohmann_json
@@ -102,12 +121,6 @@ target_compile_definitions(OpenGLRenderer PRIVATE
     OPENGLRENDERER_VERSION="${PROJECT_VERSION}"
 )
 
-if(MSVC)
-    target_compile_options(OpenGLRenderer PRIVATE /W4)
-else()
-    target_compile_options(OpenGLRenderer PRIVATE -Wall -Wextra -Wpedantic)
-endif()
-
 # MinGW: link the C++ runtime into the exe so it starts on PCs without MSYS2.
 if(MINGW)
     target_link_options(OpenGLRenderer PRIVATE -static)
@@ -116,20 +129,14 @@ endif()
 if(BUILD_TESTING)
     add_executable(settings_tests
         tests/SettingsTests.cpp
-        src/Settings.cpp
-        src/Error.cpp
-        src/Log.cpp
     )
-    target_include_directories(settings_tests PRIVATE src/headers)
-    target_link_libraries(settings_tests PRIVATE nlohmann_json::nlohmann_json)
-
-    if(MSVC)
-        target_compile_options(settings_tests PRIVATE /W4)
-    else()
-        target_compile_options(settings_tests PRIVATE -Wall -Wextra -Wpedantic)
-    endif()
+    target_link_libraries(settings_tests PRIVATE renderer_core renderer_warnings)
 
     add_test(NAME settings COMMAND settings_tests)
+
+    add_executable(obj_path_tests tests/ObjPathTests.cpp)
+    target_link_libraries(obj_path_tests PRIVATE renderer_core renderer_warnings)
+    add_test(NAME obj_path COMMAND obj_path_tests)
 endif()
 
 # ---------------------------------------------------------------------------

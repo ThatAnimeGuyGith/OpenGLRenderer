@@ -20,6 +20,8 @@ GLint uniformLocation(GLuint program, const char* name)
 
     const GLint location = glGetUniformLocation(program, name);
     locations.emplace(name, location);
+    if (location < 0)
+        Log::warn("Shader program {} has no active uniform named '{}'", program, name);
     return location;
 }
 }

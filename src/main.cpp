@@ -13,6 +13,13 @@
 #include <cstdio>
 #include <system_error>
 
+#if defined(_WIN32) && defined(NDEBUG)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 namespace {
 struct RenderState {
     GLuint shaderProgram;
@@ -70,11 +77,19 @@ void redrawWindow(GLFWwindow* window)
     if (state != nullptr)
         drawFrame(window, *state);
 }
+
+#if defined(_WIN32) && defined(NDEBUG)
+void showStartupError(const char* message)
+{
+    MessageBoxA(nullptr, message, "OpenGL Renderer startup error", MB_OK | MB_ICONERROR);
+}
+#endif
 }
 
 int main()
 {
 #if defined(_WIN32) && defined(NDEBUG)
+    bool fileLoggingInitialized = false;
     try {
         const std::filesystem::path logDirectory = userDataDir();
         std::error_code error;
@@ -87,7 +102,7 @@ int main()
             };
             const bool errorRedirected = redirectStream(stderr, "w");
             const bool outputRedirected = redirectStream(stdout, errorRedirected ? "a" : "w");
-            (void)outputRedirected;
+            fileLoggingInitialized = errorRedirected && outputRedirected;
         }
     } catch (...) {
     }
@@ -142,9 +157,17 @@ int main()
         return 0;
     } catch (const RendererError& e) {
         Log::error(e.what());
+#if defined(_WIN32) && defined(NDEBUG)
+        if (!fileLoggingInitialized)
+            showStartupError(e.what());
+#endif
         return exitCode(e.category());
     } catch (const std::exception& e) {
         Log::error(e.what());
+#if defined(_WIN32) && defined(NDEBUG)
+        if (!fileLoggingInitialized)
+            showStartupError(e.what());
+#endif
         return 1;
     }
 }

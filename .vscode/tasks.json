@@ -24,7 +24,7 @@
         {
             "label": "OpenGL Renderer: run Debug",
             "type": "process",
-            "command": "${workspaceFolder}/build/debug/OpenGLRenderer.exe",
+            "command": "${command:cmake.launchTargetPath}",
             "dependsOn": "CMake: build Debug",
             "dependsOrder": "sequence",
             "group": "test",

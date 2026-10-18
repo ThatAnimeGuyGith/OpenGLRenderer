@@ -82,6 +82,14 @@ std::filesystem::path userDataDir()
             "Could not determine the LocalAppData directory");
     }
     return std::filesystem::path(localAppData) / "OpenGLRenderer";
+#elif defined(__APPLE__)
+    const char* home = std::getenv("HOME");
+    if (home == nullptr || *home == '\0') {
+        throw RendererError(
+            ErrorCategory::Io,
+            "Could not determine the home directory");
+    }
+    return std::filesystem::path(home) / "Library" / "Application Support" / "OpenGLRenderer";
 #else
     const char* xdgDataHome = std::getenv("XDG_DATA_HOME");
     if (xdgDataHome != nullptr && *xdgDataHome != '\0')
