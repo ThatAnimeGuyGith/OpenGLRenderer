@@ -164,15 +164,6 @@ The Markdown files in [`docs/wiki/`](docs/wiki/) are the source for the GitHub w
 
 The [architecture guide](docs/wiki/Architecture.md) describes how startup, settings, assets, OpenGL rendering, and resource lifetime fit together. The [project structure page](docs/wiki/Project-structure.md) maps those responsibilities to files.
 
-Before the first publish:
-
-1. Confirm the repository wiki is enabled in GitHub's repository settings.
-2. Create a personal access token restricted to this repository with permission to write repository contents. A classic token needs the `repo` scope.
-3. Save it as the repository Actions secret `WIKI_TOKEN`.
-4. Run **Publish wiki** manually from the Actions tab.
-
-After that, pushes to `main` that change `docs/wiki/` publish the updated wiki automatically.
-
 ## Running
 
 The program reads shipped, read-only content from the `assets/` directory next to the executable, so you can launch it from any working directory. Meshes, textures, shaders, and other large game content belong there rather than inside the executable.
